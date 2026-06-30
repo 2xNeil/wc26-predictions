@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WC 2026 · Predictions</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:    #0d0d0d;
+      --gold:  #C9A227;
+      --ghi:   #F0C842;
+      --white: #fff;
+      --dim:   rgba(255,255,255,0.35);
+      --faint: rgba(255,255,255,0.05);
+      --line:  rgba(255,255,255,0.09);
+      --green: #22C55E;
+      --red:   #EF4444;
+    }
+    html, body { height: 100%; }
+    body { background: var(--bg); color: var(--white); font-family: 'Inter', sans-serif; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+    /* ── BG SLIDESHOW ── */
+    #bg-slideshow { position:fixed; inset:0; z-index:0; pointer-events:none; transition:opacity .7s; }
+    body.logged-in #bg-slideshow { opacity:0; pointer-events:none; }
+    #bg-video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; opacity:1; transition:opacity 1s ease-in-out; }
+    #bg-video.fade-out { opacity:0; }
+    #bg-slideshow img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; opacity:0; transition:opacity 1.2s ease-in-out; }
+    #bg-slideshow img.active { opacity:1; }
+    #vignette { position:fixed; inset:0; z-index:1; pointer-events:none; background:linear-gradient(to bottom,rgba(0,0,0,.25) 0%,rgba(0,0,0,.32) 40%,rgba(0,0,0,.82) 80%,rgba(0,0,0,.92) 100%); transition:opacity .7s; }
+    body.logged-in #vignette { opacity:0; pointer-events:none; }
+
+    /* ── NO USER ── */
+    #no-user { display:none; position:fixed; inset:0; z-index:50; flex-direction:column; align-items:center; justify-content:center; gap:.75rem; text-align:center; padding:2rem; }
+    #no-user.show { display:flex; }
+    #no-user img { width:48px; opacity:.4; }
+    #no-user h2  { font-family:'Bebas Neue',sans-serif; font-size:1.7rem; letter-spacing:2px; }
+    #no-user p   { color:var(--dim); font-size:.82rem; }
+    #no-user code { background:var(--faint); padding:.1rem .4rem; border-radius:4px; }
+
+    /* ── PIN (centred) ── */
+    #pin-overlay { position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center; transition:opacity .4s; }
+    #pin-overlay.hidden { opacity:0; pointer-events:none; }
+    .pin-card {
+      background: rgba(0,0,0,.04);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      border: 1px solid rgba(255,255,255,.08);
+      border-top-color: rgba(255,255,255,.12);
+      border-radius: 28px;
+      padding: 3rem 2.2rem 2.2rem;
+      text-align: center;
+      max-width: 340px;
+      width: 88%;
+      box-shadow: 0 40px 100px rgba(0,0,0,.55), 0 2px 0 rgba(255,255,255,.06) inset;
+    }
+    .pin-logo { width:68px; height:68px; object-fit:contain; margin-bottom:.9rem; filter:drop-shadow(0 6px 18px rgba(201,162,39,.4)); }
+    .pin-eyebrow { font-size:.58rem; font-weight:700; letter-spacing:3.5px; text-transform:uppercase; color:var(--gold); margin-bottom:.35rem; }
+    .pin-title { font-family:'Bebas Neue',sans-serif; font-size:2.6rem; letter-spacing:5px; line-height:1; margin-bottom:.35rem; }
+    .pin-sub { font-size:.72rem; color:rgba(255,255,255,.32); margin-bottom:1.6rem; letter-spacing:.3px; }
+    .pin-boxes { display:flex; gap:.65rem; justify-content:center; margin-bottom:1.6rem; }
+    .pin-box {
+      width:58px; height:68px;
+      background:rgba(255,255,255,.05); border:1.5px solid rgba(255,255,255,.14); border-radius:14px;
+      color:var(--white); font-size:1.9rem; font-weight:900; font-family:'Bebas Neue',sans-serif;
+      text-align:center; letter-spacing:0; outline:none;
+      transition:border-color .18s,background .18s,box-shadow .18s;
+    }
+    .pin-box:focus { border-color:var(--gold); background:rgba(201,162,39,.07); box-shadow:0 0 0 3px rgba(201,162,39,.18); }
+    .pin-box.filled { border-color:rgba(201,162,39,.5); }
+    #pin-btn { width:100%; padding:.88rem; background:linear-gradient(145deg,#E8B320,#C9A227 55%,#A88520); color:#0a0a0a; border:none; border-radius:12px; font-weight:900; font-size:.82rem; letter-spacing:2px; text-transform:uppercase; cursor:pointer; box-shadow:0 4px 20px rgba(201,162,39,.35),0 2px 6px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.15); transition:transform .12s,box-shadow .12s; }
+    #pin-btn:hover   { transform:translateY(-2px); box-shadow:0 6px 24px rgba(201,162,39,.48),0 3px 8px rgba(0,0,0,.4); }
+    #pin-btn:active  { transform:translateY(1px); }
+    #pin-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
+    #pin-error { color:var(--red); font-size:.74rem; margin-top:.65rem; min-height:1rem; }
+
+    /* ── APP ── */
+    #app { display:none; position:relative; z-index:10; min-height:100vh; flex-direction:column; }
+    body.logged-in #app { display:flex; }
+
+    /* ── CAROUSEL CONTAINER ── */
+    .carousel-container { flex:1; display:flex; flex-direction:column; padding:1.25rem 0 .5rem; overflow:hidden; }
+    .carousel-row { display:flex; align-items:center; flex:1; }
+    .arrow-btn { display:none; flex-shrink:0; width:36px; height:36px; background:rgba(255,255,255,.07); border:1px solid var(--line); border-radius:50%; color:rgba(255,255,255,.6); font-size:1.1rem; cursor:pointer; align-items:center; justify-content:center; margin:0 .5rem; transition:background .15s,color .15s; }
+    .arrow-btn:hover { background:rgba(255,255,255,.12); color:var(--white); }
+    .arrow-btn:disabled { opacity:.22; cursor:default; }
+    @media (min-width:640px) { .arrow-btn { display:flex; } }
+    #carousel-outer { flex:1; overflow:hidden; }
+    #carousel-track { display:flex; align-items:stretch; transition:transform .42s cubic-bezier(.35,0,.25,1); will-change:transform; }
+
+    .carousel-slide { flex:0 0 80vw; max-width:400px; height:var(--slide-h,540px); margin-right:14px; transition:filter .32s ease,transform .32s ease; }
+    .carousel-slide:not(.active) { filter:blur(2px) brightness(.32); transform:scale(.94); pointer-events:none; }
+    .carousel-slide.active { filter:none; transform:scale(1); }
+    @media (max-width:639px) {
+      .carousel-slide { flex:0 0 100vw; max-width:none; }
+      .carousel-slide:not(.active) { filter:none; transform:none; }
+    }
+
+    /* ── PREDICTION CARD ── */
+    .pred-card {
+      height:100%;
+      background:linear-gradient(155deg,rgba(8,8,8,.82) 0%,rgba(8,8,8,.90) 100%);
+      border:1px solid rgba(255,255,255,.12); border-radius:20px;
+      padding:1.5rem 1.25rem .9rem;
+      display:flex; flex-direction:column; gap:0;
+      box-shadow:0 8px 40px rgba(0,0,0,.6),0 2px 8px rgba(0,0,0,.35);
+      position:relative; overflow:hidden; isolation:isolate;
+    }
+    .pred-card::before {
+      content:''; position:absolute; inset:0; border-radius:inherit; z-index:-1;
+      background-image:var(--card-bg-img); background-size:cover; background-position:center; opacity:.15;
+    }
+    .pc-meta { font-size:.68rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--gold); line-height:1.4; margin-bottom:.65rem; }
+    .pc-vs { font-family:'Bebas Neue',sans-serif; font-size:clamp(1.85rem,6.5vw,2.6rem); letter-spacing:1.5px; line-height:1.05; margin-bottom:1.5rem; }
+    .pc-vs .vs-sep { color:rgba(255,255,255,.28); font-size:.65em; }
+    .pc-winner-section { margin-bottom:1.4rem; }
+    .pc-label { font-size:.68rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.32); }
+
+    .pc-winner { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
+    .wb { display:flex; align-items:center; gap:.6rem; padding:.85rem .9rem; background:rgba(255,255,255,.04); border:1.5px solid rgba(255,255,255,.1); border-radius:13px; color:var(--white); cursor:pointer; transition:border-color .18s,background .18s,box-shadow .18s; }
+    .wb:hover:not(:disabled) { border-color:rgba(255,255,255,.22); }
+    .wb.sel { border-color:var(--gold); background:rgba(201,162,39,.1); box-shadow:0 0 22px rgba(201,162,39,.18),inset 0 0 14px rgba(201,162,39,.04); }
+    .wb:not(.sel):disabled { opacity:.42; cursor:default; }
+    .wb.sel:disabled { cursor:default; }
+    .wb.left-btn  { flex-direction:row; }
+    .wb.right-btn { flex-direction:row-reverse; }
+    .wb-flag { flex-shrink:0; display:flex; align-items:center; }
+    .wb-name { font-size:.8rem; font-weight:700; line-height:1.3; flex:1; text-align:left; }
+    .wb-pfps { display:flex; gap:.15rem; align-items:center; flex-shrink:0; }
+
+    .pc-score { display:flex; flex-direction:column; gap:0; }
+    .sc-row { display:flex; align-items:center; gap:.55rem; padding:.55rem 0; border-bottom:1px solid rgba(255,255,255,.06); }
+    .sc-row:last-child { border-bottom:none; }
+    .sc-left { display:flex; align-items:center; gap:.45rem; flex:1; min-width:0; }
+    .sc-name { font-size:.78rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .stepper { display:flex; align-items:center; gap:.1rem; flex-shrink:0; }
+    .sp-btn { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:8px; color:rgba(255,255,255,.7); width:36px; height:36px; font-size:1.05rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .1s,color .1s; }
+    .sp-btn:hover:not(:disabled) { background:rgba(255,255,255,.14); color:var(--white); }
+    .sp-btn:disabled { opacity:.25; cursor:default; }
+    .sp-num { font-family:'Bebas Neue',sans-serif; font-size:1.85rem; line-height:1; min-width:2rem; text-align:center; color:var(--white); user-select:none; }
+
+    .flag    { max-width:52px; max-height:36px; width:auto; height:auto; object-fit:contain; border-radius:4px; display:block; }
+    .flag-sm { max-width:26px; max-height:18px; width:auto; height:auto; object-fit:contain; border-radius:3px; display:block; }
+    .flag-fb    { width:48px; height:32px; border-radius:4px; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; font-size:.5rem; font-weight:700; color:var(--dim); }
+    .flag-sm-fb { width:24px; height:16px; border-radius:3px; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; font-size:.4rem; font-weight:700; color:var(--dim); }
+
+    .pick-pfp { width:18px; height:18px; border-radius:50%; object-fit:cover; border:1.5px solid rgba(255,255,255,.15); flex-shrink:0; }
+    .pick-pfp.is-draft  { opacity:.38; border-color:rgba(201,162,39,.3); }
+    .pick-pfp.is-locked { opacity:1;   border-color:rgba(201,162,39,.65); }
+    .pick-pfp.is-them   { opacity:1;   border-color:rgba(255,255,255,.28); }
+
+    .pc-result-row { display:flex; flex-direction:column; align-items:center; gap:.25rem; }
+    .pc-result-ft    { font-size:.5rem; font-weight:700; letter-spacing:1.5px; color:var(--green); text-transform:uppercase; }
+    .pc-result-score { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; line-height:1; }
+
+    /* ── FINAL CARD ── */
+    .pred-card.final-card { justify-content:center; align-items:center; text-align:center; gap:.9rem; background:radial-gradient(ellipse at 50% 0%,rgba(201,162,39,.13) 0%,rgba(0,0,0,0) 65%),linear-gradient(155deg,rgba(255,255,255,.05) 0%,rgba(255,255,255,.02) 100%); border-color:rgba(201,162,39,.28); }
+    .fc-bg-logo { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:78%; pointer-events:none; user-select:none; opacity:.055; }
+    .fc-bg-logo img { width:100%; object-fit:contain; }
+    .fc-content { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:.7rem; }
+    .fc-logo    { width:48px; height:48px; object-fit:contain; }
+    .fc-heading { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:3px; line-height:1; }
+    .fc-count   { font-size:.72rem; font-weight:600; color:rgba(255,255,255,.4); letter-spacing:.5px; }
+    .fc-lock-btn { margin-top:.4rem; padding:.9rem 2rem; background:linear-gradient(145deg,#E8B320 0%,#C9A227 55%,#A88520 100%); color:#0a0a0a; border:none; border-radius:12px; font-weight:900; font-size:.9rem; letter-spacing:2px; text-transform:uppercase; cursor:pointer; box-shadow:0 4px 20px rgba(201,162,39,.44),0 2px 6px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.15); transition:transform .12s,box-shadow .12s; }
+    .fc-lock-btn:hover  { transform:translateY(-2px); box-shadow:0 6px 24px rgba(201,162,39,.55),0 3px 8px rgba(0,0,0,.5); }
+    .fc-lock-btn:active { transform:translateY(1px); }
+    .fc-lock-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+    /* ── LOCK SAVING OVERLAY ── */
+    #lock-saving { position:fixed; inset:0; z-index:40; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1rem; opacity:0; pointer-events:none; transition:opacity .3s; background:rgba(0,0,0,.6); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+    #lock-saving.show { opacity:1; pointer-events:all; }
+    .save-ball { font-size:3.2rem; animation:spin-ball .9s linear infinite; display:block; }
+    @keyframes spin-ball { to { transform:rotate(360deg); } }
+    .save-text { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:3px; color:var(--gold); }
+
+    /* ── DOTS ── */
+    #carousel-dots { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; padding:.8rem 1rem .25rem; flex-shrink:0; }
+    .dot { width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,.22); cursor:pointer; transition:background .2s; flex-shrink:0; }
+    .dot:hover { background:rgba(255,255,255,.45); }
+    .dot.active { background:none; width:auto; height:auto; font-size:13px; line-height:1; cursor:default; }
+
+    /* ── STANDINGS SHEET ── */
+    #standings-modal { position:fixed; inset:0; z-index:35; display:flex; flex-direction:column; background:#111; transition:transform .3s cubic-bezier(.4,0,.2,1); transform:translateY(100%); }
+    #standings-modal.open { transform:translateY(0); }
+    .st-header { display:flex; align-items:center; justify-content:space-between; padding:.9rem 1.25rem; border-bottom:1px solid var(--line); flex-shrink:0; }
+    .st-title  { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:2px; }
+    .st-scores    { display:flex; align-items:center; gap:.6rem; }
+    .st-si        { display:flex; align-items:center; gap:.4rem; }
+    .st-pfp-score { width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,.15); flex-shrink:0; }
+    .st-sp        { font-family:'Bebas Neue',sans-serif; font-size:1.7rem; line-height:1; }
+    .st-vs        { font-size:.6rem; color:var(--dim); }
+    .st-body   { flex:1; overflow-y:auto; padding:1.25rem 1.25rem 3rem; }
+    /* ── SCORECARD GAME BOXES ── */
+    .sg-round { font-size:.52rem; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--gold); padding:1.1rem 0 .4rem; }
+    .sg-round:first-child { padding-top:.1rem; }
+    .sg-box { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:14px; padding:.85rem .9rem .9rem; margin-bottom:1rem; }
+    .sg-meta { font-size:.56rem; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:rgba(255,255,255,.28); margin-bottom:.65rem; }
+    .sg-content { display:grid; grid-template-columns:1fr auto 1fr; align-items:start; gap:.4rem; }
+    .sg-side { display:flex; flex-direction:column; align-items:center; gap:.28rem; }
+    .sg-tname { font-size:.72rem; font-weight:700; text-align:center; line-height:1.25; color:var(--white); }
+    .sg-flag-col { display:flex; flex-direction:column; align-items:center; gap:.32rem; }
+    .sg-flag-img { width:64px; height:43px; object-fit:contain; border-radius:4px; display:block; }
+    .sg-flag-fb  { width:64px; height:43px; border-radius:4px; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; font-size:.55rem; font-weight:700; color:var(--dim); }
+    .sg-center { display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:.06rem; padding-top:1.55rem; }
+    .sg-score { font-family:'Bebas Neue',sans-serif; font-size:1.45rem; letter-spacing:1px; line-height:1; white-space:nowrap; }
+    .sg-score--pending { color:rgba(255,255,255,.25); font-size:1.1rem; letter-spacing:0; }
+    .sg-ft { font-size:.46rem; font-weight:700; letter-spacing:1.5px; color:var(--green); text-transform:uppercase; }
+    /* Pills */
+    .sg-pills { display:flex; flex-direction:column; gap:.22rem; align-items:center; }
+    .sg-pill { display:inline-flex; align-items:center; gap:.28rem; padding:.22rem .48rem; border-radius:999px; border:none; background:rgba(255,255,255,.12); font-size:.62rem; font-weight:600; white-space:nowrap; color:var(--white); }
+    .sg-pill--green { background:#166534; }
+    .sg-pill--red   { background:#991B1B; }
+    .sg-pfp { width:15px; height:15px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+
+    .loading { text-align:center; padding:3.5rem 1rem; color:var(--dim); }
+    .spinner { display:inline-block; width:28px; height:28px; border:2px solid rgba(255,255,255,.06); border-top-color:var(--gold); border-radius:50%; animation:spin .7s linear infinite; margin-bottom:.8rem; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div id="bg-slideshow" aria-hidden="true">
+  <video id="bg-video" autoplay muted playsinline>
+    <source src="assets/worldcup_van.mp4" type="video/mp4" />
+    <source src="assets/worldcup_van.webm" type="video/webm" />
+  </video>
+  <img id="bg-img-a" src="" alt="" />
+  <img id="bg-img-b" src="" alt="" />
+</div>
+<div id="vignette"></div>
+
+<div id="no-user">
+  <img src="assets/wc-logo.png" alt="" />
+  <h2>WC 2026 Predictions</h2>
+  <p>Add <code>?user=neil</code> or <code>?user=eduardo</code> to the URL</p>
+</div>
+
+<div id="pin-overlay">
+  <div class="pin-card">
+    <img src="assets/wc-logo.png" class="pin-logo" alt="" />
+    <div class="pin-eyebrow">FIFA World Cup 2026</div>
+    <div class="pin-title">PREDICTIONS</div>
+    <div class="pin-sub">Welcome, <strong id="pin-user-name"></strong>!</div>
+    <div class="pin-boxes">
+      <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" />
+      <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" />
+      <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" />
+      <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" />
+    </div>
+    <button id="pin-btn" onclick="verifyPin()">Enter the arena →</button>
+    <div id="pin-error"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="carousel-container">
+    <div class="carousel-row">
+      <button class="arrow-btn" id="arr-left"  onclick="goTo(currentIdx-1)">‹</button>
+      <div id="carousel-outer">
+        <div id="carousel-track"></div>
+      </div>
+      <button class="arrow-btn" id="arr-right" onclick="goTo(currentIdx+1)">›</button>
+    </div>
+    <div id="carousel-dots"></div>
+  </div>
+</div>
+
+<div id="lock-saving">
+  <span class="save-ball">⚽</span>
+  <div class="save-text" id="save-text">Saving…</div>
+</div>
+
+<div id="standings-modal">
+  <div class="st-header">
+    <span class="st-title">Standings</span>
+    <div class="st-scores">
+      <div class="st-si"><img class="st-pfp-score" src="assets/neil.png" alt="Neil" /><div class="st-sp" id="st-pts-neil">0</div></div>
+      <div class="st-vs">vs</div>
+      <div class="st-si"><img class="st-pfp-score" src="assets/eduardo.png" alt="Eduardo" /><div class="st-sp" id="st-pts-eduardo">0</div></div>
+    </div>
+  </div>
+  <div class="st-body" id="st-body"><div class="loading"><div class="spinner"></div></div></div>
+</div>
+
+<script>
+// ── BACKGROUND SLIDESHOW ─────────────────────────────────────────────
+(function() {
+  const nums = [1,2,3,4,5,6,7,8,11,12,13,14,15,16,17];
+  const imgs = nums.map(n=>`assets/background_${n}.png`);
+  const video = document.getElementById('bg-video');
+  const a = document.getElementById('bg-img-a');
+  const b = document.getElementById('bg-img-b');
+  let idx = Math.floor(Math.random() * imgs.length);
+  let cur = a, nxt = b;
+
+  // Pre-load first two images while video plays
+  a.src = imgs[idx];
+  b.src = imgs[(idx + 1) % imgs.length];
+
+  let started = false;
+  function startSlideshow() {
+    if (started) return; // B2: guard against ended/error/play-rejection firing more than once
+    started = true;
+    video.classList.add('fade-out');
+    a.classList.add('active');
+    setTimeout(() => { video.style.display = 'none'; }, 1000);
+    setInterval(() => {
+      idx = (idx + 1) % imgs.length;
+      nxt.src = imgs[(idx + 1) % imgs.length];
+      nxt.classList.add('active');
+      cur.classList.remove('active');
+      [cur, nxt] = [nxt, cur];
+    }, 2500);
+  }
+
+  // B1: if autoplay is blocked, play() rejects immediately — switch to images right away
+  const playPromise = video.play();
+  if (playPromise !== undefined) playPromise.catch(startSlideshow);
+
+  video.addEventListener('ended', startSlideshow);
+  video.addEventListener('error', startSlideshow);
+  // Safety net only — covers a stuck/slow load that never fires error or ended
+  setTimeout(startSlideshow, 6000);
+})();
+
+// ── CONFIG ──────────────────────────────────────────────────────────
+const API        = 'https://script.google.com/macros/s/AKfycbw_H7LXH40OTE3hvj4srHW_A5CDCiZNZZRb3MjQ-M4pEb3DS8I7_gRM1eWbVtfvInlR/exec';
+const FIFA_FLAGS = 'https://api.fifa.com/api/v3/picture/flags-sq-4/';
+const FIFA_CODES = {
+  "Algeria":"ALG","Argentina":"ARG","Australia":"AUS","Austria":"AUT",
+  "Belgium":"BEL","Bosnia and Herzegovina":"BIH","Canada":"CAN",
+  "Côte d'Ivoire":"CIV","Congo DR":"COD","Colombia":"COL","Cabo Verde":"CPV",
+  "Croatia":"CRO","Ecuador":"ECU","Egypt":"EGY","England":"ENG",
+  "Spain":"ESP","France":"FRA","Ghana":"GHA","Morocco":"MAR","Mexico":"MEX",
+  "Norway":"NOR","Portugal":"POR","Senegal":"SEN","Switzerland":"SUI",
+  "Sweden":"SWE","USA":"USA",
+};
+const ROUND_ORDER = ['Round of 32','Round of 16','Quarter-finals','Semi-finals','Third Place Playoff','Final'];
+const SLIDE_GAP   = 14;
+
+// ── STATE ────────────────────────────────────────────────────────────
+const params  = new URLSearchParams(window.location.search);
+const ME      = (params.get('user') || '').toLowerCase();
+const THEM    = ME === 'neil' ? 'eduardo' : 'neil';
+const ME_NAME = cap(ME);
+let games = [], predictions = [];
+const draft = {};
+let currentIdx = 0, totalSlides = 0, touchInited = false;
+window._slideW = 300; window._peek = 40;
+
+function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : ''; }
+
+// ── BOOT ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (!['neil','eduardo'].includes(ME)) {
+    document.getElementById('pin-overlay').classList.add('hidden');
+    document.getElementById('no-user').classList.add('show');
+    return;
+  }
+  // #1 fix: set pin-user-name (removed the dead chip-pfp/chip-name refs that were crashing this)
+  document.getElementById('pin-user-name').textContent = ME_NAME;
+  initPinBoxes();
+  document.addEventListener('keydown', e => {
+    if (document.getElementById('standings-modal').classList.contains('open')) return;
+    if (e.key === 'ArrowRight') goTo(currentIdx + 1);
+    if (e.key === 'ArrowLeft')  goTo(currentIdx - 1);
+  });
+  const saved = sessionStorage.getItem('wc_pin');
+  if (saved) attemptLoad(saved);
+});
+
+// ── AUTH ─────────────────────────────────────────────────────────────
+function initPinBoxes() {
+  const boxes = [...document.querySelectorAll('.pin-box')];
+  boxes.forEach((box, i) => {
+    // #2 fix: use 'input' event to auto-advance — works on all keyboard types
+    box.addEventListener('input', e => {
+      const v = e.target.value.replace(/\D/g, '').slice(0, 1);
+      e.target.value = v;
+      e.target.classList.toggle('filled', !!v);
+      if (v && i < boxes.length - 1) boxes[i + 1].focus();
+      if (i === boxes.length - 1 && v) verifyPin();
+    });
+    box.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !box.value && i > 0) {
+        boxes[i - 1].value = '';
+        boxes[i - 1].classList.remove('filled');
+        boxes[i - 1].focus();
+      }
+    });
+    box.addEventListener('paste', e => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 4);
+      [...text].forEach((ch, j) => { if (boxes[j]) { boxes[j].value = ch; boxes[j].classList.add('filled'); } });
+      const last = boxes[Math.min(text.length, boxes.length) - 1];
+      if (last) last.focus();
+      if (text.length >= 4) setTimeout(verifyPin, 80);
+    });
+  });
+  setTimeout(() => boxes[0] && boxes[0].focus(), 300);
+}
+
+function getPinValue() {
+  return [...document.querySelectorAll('.pin-box')].map(b => b.value).join('');
+}
+function resetPinBoxes() {
+  document.querySelectorAll('.pin-box').forEach(b => { b.value = ''; b.classList.remove('filled'); });
+  const first = document.querySelector('.pin-box');
+  if (first) first.focus();
+}
+
+async function verifyPin() {
+  const pin = getPinValue();
+  const err = document.getElementById('pin-error');
+  if (pin.length < 4) return;
+  const btn = document.getElementById('pin-btn');
+  btn.disabled = true; btn.textContent = 'Checking…'; err.textContent = '';
+  try {
+    const res = await apiGet('verifyPin', { user: ME, pin });
+    if (res.valid) {
+      sessionStorage.setItem('wc_pin', pin);
+      document.getElementById('pin-overlay').classList.add('hidden');
+      document.body.classList.add('logged-in');
+      loadData();
+    } else {
+      err.textContent = '❌ Wrong PIN — try again';
+      resetPinBoxes();
+    }
+  } catch { err.textContent = '⚠️ Connection error'; resetPinBoxes(); }
+  finally  { btn.disabled = false; btn.textContent = 'Enter the arena →'; }
+}
+async function attemptLoad(pin) {
+  try {
+    const res = await apiGet('verifyPin', { user: ME, pin });
+    if (res.valid) {
+      document.getElementById('pin-overlay').classList.add('hidden');
+      document.body.classList.add('logged-in');
+      loadData();
+    } else sessionStorage.removeItem('wc_pin');
+  } catch {}
+}
+
+// ── API ──────────────────────────────────────────────────────────────
+async function apiGet(action, extra = {}) {
+  const url = new URL(API);
+  url.searchParams.set('action', action);
+  for (const [k, v] of Object.entries(extra)) url.searchParams.set(k, String(v));
+  return (await fetch(url.toString(), { redirect:'follow', cache:'no-store' })).json();
+}
+
+// Pre-fetch while the user is entering their PIN — data isn't sensitive
+const _preGames       = apiGet('games');
+const _prePredictions = apiGet('predictions');
+
+// ── DATA ─────────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    [games, predictions] = await Promise.all([_preGames, _prePredictions]);
+    buildCarousel();
+  } catch {
+    document.getElementById('carousel-outer').innerHTML =
+      '<div class="loading">⚠️ Failed to load. Check connection.</div>';
+  }
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────
+function getPred(gameId, user) {
+  return predictions.find(p => String(p.game_id) === String(gameId) && p.user === user) || null;
+}
+function flagSrc(team) { const c = FIFA_CODES[team]; return c ? `${FIFA_FLAGS}${c}` : ''; }
+function flagErr(el, init, sm) {
+  el.style.display = 'none';
+  const fb = document.createElement('div');
+  fb.className = sm ? 'flag-sm-fb' : 'flag-fb';
+  fb.textContent = init;
+  el.parentNode.insertBefore(fb, el.nextSibling);
+}
+function fHtml(team, sm) {
+  const src  = flagSrc(team);
+  const cls  = sm ? 'flag-sm' : 'flag';
+  const init = (team||'').split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
+  if (!src) return `<div class="${sm?'flag-sm-fb':'flag-fb'}">${init}</div>`;
+  return `<img class="${cls}" src="${src}" alt="${team}" onerror="flagErr(this,'${init}',${sm})" />`;
+}
+function pfpHtml(user, state) { return `<img class="pick-pfp ${state}" src="assets/${user}.png" alt="${cap(user)}" />`; }
+function calcPts(pred, game) {
+  if (!pred||!game.result_winner) return 0;
+  let p = 0;
+  if (pred.winner===game.result_winner) p+=5;
+  if (String(pred.score1)===String(game.result_score1)&&String(pred.score2)===String(game.result_score2)) p+=10;
+  return p;
+}
+function totals() {
+  const s={neil:0,eduardo:0};
+  for (const g of games) { if (!g.result_winner) continue; for (const u of ['neil','eduardo']) s[u]+=calcPts(getPred(g.id,u),g); }
+  return s;
+}
+function esc(s) { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+// ── BUILD CAROUSEL ────────────────────────────────────────────────────
+function buildCarousel() {
+  // #4: only show games where user hasn't predicted yet
+  const pending = [...games]
+    .filter(g => !getPred(g.id, ME))
+    .sort((a,b) => {
+      const ai=ROUND_ORDER.indexOf(a.round), bi=ROUND_ORDER.indexOf(b.round);
+      return (ai<0?999:ai)-(bi<0?999:bi);
+    });
+
+  // #7: if nothing pending, go straight to standings
+  if (pending.length === 0) {
+    openStandings();
+    return;
+  }
+
+  const slideH = Math.min(Math.floor(window.innerHeight * 0.58), 500);
+  document.documentElement.style.setProperty('--slide-h', slideH + 'px');
+
+  totalSlides = pending.length + 1;
+  const BG_NUMS = [1,2,3,4,5,6,7,8,11,12,13,14,15,16,17];
+  let lastBg = -1;
+  function pickBg() {
+    const opts = BG_NUMS.filter(n => n !== lastBg);
+    const n = opts[Math.floor(Math.random() * opts.length)];
+    lastBg = n; return n;
+  }
+
+  let html = '';
+  for (const g of pending) {
+    html += `<div class="carousel-slide" id="slide-${g.id}" style="margin-right:${SLIDE_GAP}px">${buildPredCard(g, pickBg())}</div>`;
+  }
+  html += `<div class="carousel-slide" id="slide-final" style="margin-right:${SLIDE_GAP}px">${buildFinalCard(pending.length)}</div>`;
+
+  const track = document.getElementById('carousel-track');
+  track.innerHTML = html;
+  track.style.transition = 'none';
+  track.style.transform  = 'translateX(0)';
+
+  if (!touchInited) { // B3: only attach once — #carousel-outer persists across rebuilds
+    initTouch(document.getElementById('carousel-outer'));
+    touchInited = true;
+  }
+
+  requestAnimationFrame(() => {
+    const outer = document.getElementById('carousel-outer');
+    const slide = document.querySelector('.carousel-slide');
+    if (slide && outer) {
+      const isMobile = window.innerWidth < 640;
+      const outerW = outer.offsetWidth;
+      const slideW = slide.offsetWidth;
+      const peek   = isMobile ? 0 : Math.max(0, (outerW - slideW) / 2);
+      track.style.paddingLeft = peek + 'px';
+      window._slideW = isMobile ? outerW : slideW;
+      window._peek   = peek;
+    }
+    currentIdx = 0;
+    goTo(0, false);
+    buildDots();
+  });
+}
+
+// ── CARD BUILDERS ─────────────────────────────────────────────────────
+function buildPredCard(g, bgNum) {
+  const myPred   = getPred(g.id, ME);
+  const thPred   = getPred(g.id, THEM);
+  const hasRes   = !!(g.result_winner && String(g.result_winner).trim());
+  const isLocked = !!myPred;
+  const d        = draft[g.id] || { winner:null, score1:0, score2:0 };
+
+  const showWinner = isLocked ? myPred.winner : (hasRes ? g.result_winner : d.winner);
+  const showS1     = isLocked ? myPred.score1 : (hasRes ? g.result_score1 : d.score1);
+  const showS2     = isLocked ? myPred.score2 : (hasRes ? g.result_score2 : d.score2);
+  const disabled   = isLocked || hasRes;
+  const dis        = disabled ? 'disabled' : '';
+  const revealThem = isLocked || hasRes;
+  const myState    = isLocked ? 'is-locked' : 'is-draft';
+
+  const id   = g.id;
+  const meta = [g.round, g.venue].filter(Boolean).join(' · ');
+
+  let scoreSection = '';
+  if (hasRes) {
+    scoreSection = `
+      <div class="pc-result-row">
+        <div class="pc-result-ft">Full Time</div>
+        <div class="pc-result-score">${g.result_score1} – ${g.result_score2}</div>
+      </div>`;
+  } else {
+    scoreSection = `
+      <div>
+        <div class="pc-label" style="margin-bottom:.55rem">Score</div>
+        <div class="pc-score">
+          <div class="sc-row">
+            <div class="sc-left">${fHtml(g.team1,true)}<span class="sc-name">${g.team1}</span></div>
+            <div class="stepper">
+              <button class="sp-btn" onclick="step('${esc(String(id))}','a',-1)" ${dis}>−</button>
+              <span class="sp-num" id="sn-${id}-a">${showS1}</span>
+              <button class="sp-btn" onclick="step('${esc(String(id))}','a',1)" ${dis}>+</button>
+            </div>
+          </div>
+          <div class="sc-row">
+            <div class="sc-left">${fHtml(g.team2,true)}<span class="sc-name">${g.team2}</span></div>
+            <div class="stepper">
+              <button class="sp-btn" onclick="step('${esc(String(id))}','b',-1)" ${dis}>−</button>
+              <span class="sp-num" id="sn-${id}-b">${showS2}</span>
+              <button class="sp-btn" onclick="step('${esc(String(id))}','b',1)" ${dis}>+</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  const bgStyle = bgNum ? ` style="--card-bg-img:url('assets/background_${bgNum}.png')"` : '';
+  return `
+<div class="pred-card" data-id="${id}"${bgStyle}>
+  <div class="pc-meta">${meta}</div>
+  <div class="pc-vs">${g.team1} <span class="vs-sep">vs</span> ${g.team2}</div>
+  <div class="pc-winner-section">
+    <div class="pc-label" style="margin-bottom:.55rem">Winner</div>
+    <div class="pc-winner">
+      <button class="wb left-btn${showWinner===g.team1?' sel':''}" id="wb-${id}-a"
+        onclick="pickWinner('${esc(String(id))}','${esc(g.team1)}')" ${dis}>
+        <div class="wb-flag">${fHtml(g.team1,false)}</div>
+        <div class="wb-name">${g.team1}</div>
+      </button>
+      <button class="wb right-btn${showWinner===g.team2?' sel':''}" id="wb-${id}-b"
+        onclick="pickWinner('${esc(String(id))}','${esc(g.team2)}')" ${dis}>
+        <div class="wb-name">${g.team2}</div>
+        <div class="wb-flag">${fHtml(g.team2,false)}</div>
+      </button>
+    </div>
+  </div>
+  ${scoreSection}
+</div>`;
+}
+
+// #5: clean, simple final card
+function buildFinalCard(pendingCount) {
+  const draftReady = Object.values(draft).filter(d=>d.winner).length;
+  const sub = draftReady > 0 ? `${draftReady} of ${pendingCount} picked` : `${pendingCount} match${pendingCount!==1?'es':''} to predict`;
+  return `
+<div class="pred-card final-card">
+  <div class="fc-bg-logo"><img src="assets/wc-logo.png" alt="" /></div>
+  <div class="fc-content">
+    <img src="assets/wc-logo.png" class="fc-logo" alt="" />
+    <h2 class="fc-heading">Lock In</h2>
+    <div class="fc-count">${sub}</div>
+    <button class="fc-lock-btn" onclick="promptLock()" disabled>Submit Picks ⚽</button>
+  </div>
+</div>`;
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────
+function goTo(idx, animate = true) {
+  currentIdx = Math.max(0, Math.min(totalSlides - 1, idx));
+  const track  = document.getElementById('carousel-track');
+  const offset = currentIdx * (window._slideW + SLIDE_GAP);
+  if (!animate) {
+    track.style.transition = 'none';
+    track.style.transform  = `translateX(-${offset}px)`;
+    requestAnimationFrame(() => { track.style.transition = ''; });
+  } else {
+    track.style.transform = `translateX(-${offset}px)`;
+  }
+  document.querySelectorAll('.carousel-slide').forEach((s, i) => s.classList.toggle('active', i === currentIdx));
+  updateDots();
+  updateArrows();
+}
+function updateArrows() {
+  const l = document.getElementById('arr-left');
+  const r = document.getElementById('arr-right');
+  if (l) l.disabled = currentIdx === 0;
+  if (r) r.disabled = currentIdx === totalSlides - 1;
+}
+
+// ── DOTS ──────────────────────────────────────────────────────────────
+function buildDots() {
+  const el = document.getElementById('carousel-dots');
+  let html = '';
+  for (let i = 0; i < totalSlides; i++) {
+    html += `<span class="dot${i===currentIdx?' active':''}" onclick="goTo(${i})">${i===currentIdx?'⚽':''}</span>`;
+  }
+  el.innerHTML = html;
+}
+function updateDots() {
+  document.querySelectorAll('#carousel-dots .dot').forEach((d, i) => {
+    const a = i === currentIdx;
+    d.classList.toggle('active', a);
+    d.textContent = a ? '⚽' : '';
+  });
+}
+
+// ── TOUCH ─────────────────────────────────────────────────────────────
+function initTouch(el) {
+  let sx=0, sy=0, cx=0, cy=0, on=false;
+  el.addEventListener('touchstart', e => { sx=e.touches[0].clientX; sy=e.touches[0].clientY; cx=sx; cy=sy; on=true; }, {passive:true});
+  el.addEventListener('touchmove',  e => { if (!on) return; cx=e.touches[0].clientX; cy=e.touches[0].clientY; }, {passive:true});
+  el.addEventListener('touchend',   () => {
+    if (!on) return; on=false;
+    const dx=cx-sx, dy=Math.abs(cy-sy);
+    if (Math.abs(dx)>48 && Math.abs(dx)>dy) goTo(dx<0 ? currentIdx+1 : currentIdx-1);
+  });
+}
+
+// ── PICK INTERACTIONS ─────────────────────────────────────────────────
+function pickWinner(gameId, team) {
+  if (getPred(gameId, ME)) return;
+  const g = games.find(x => String(x.id) === String(gameId));
+  if (!g || g.result_winner) return;
+  if (!draft[gameId]) draft[gameId] = { winner:null, score1:0, score2:0 };
+  draft[gameId].winner = team;
+  const wbA = document.getElementById(`wb-${gameId}-a`);
+  const wbB = document.getElementById(`wb-${gameId}-b`);
+  if (wbA) wbA.classList.toggle('sel', team === g.team1);
+  if (wbB) wbB.classList.toggle('sel', team === g.team2);
+  // Enable the lock button once at least one winner is picked
+  const lockBtn = document.querySelector('.fc-lock-btn');
+  if (lockBtn) lockBtn.disabled = false;
+  // B4: keep the final card's "X of Y picked" count live as the user picks
+  const countEl = document.querySelector('.fc-count');
+  if (countEl) {
+    const ready = Object.values(draft).filter(d=>d.winner).length;
+    countEl.textContent = `${ready} of ${totalSlides - 1} picked`;
+  }
+}
+function step(gameId, side, delta) {
+  if (getPred(gameId, ME)) return;
+  const g = games.find(x => String(x.id) === String(gameId));
+  if (!g || g.result_winner) return;
+  if (!draft[gameId]) draft[gameId] = { winner:null, score1:0, score2:0 };
+  const key = side==='a' ? 'score1' : 'score2';
+  draft[gameId][key] = Math.max(0, Math.min(20, (draft[gameId][key]||0)+delta));
+  const el = document.getElementById(`sn-${gameId}-${side}`);
+  if (el) el.textContent = draft[gameId][key];
+}
+
+// ── LOCK FLOW (#6: no modal, inline spinner) ──────────────────────────
+function promptLock() {
+  const ready = Object.values(draft).filter(d=>d.winner).length;
+  if (!ready) { openStandings(); return; }
+  confirmLock();
+}
+
+async function confirmLock() {
+  const toSave  = Object.entries(draft).filter(([,d])=>d.winner);
+  const saveEl  = document.getElementById('lock-saving');
+  const textEl  = document.getElementById('save-text');
+  const lockBtn = document.querySelector('.fc-lock-btn');
+  if (lockBtn) lockBtn.disabled = true;
+
+  saveEl.classList.add('show');
+  textEl.textContent = `Saved 0 / ${toSave.length}`;
+
+  const pin = sessionStorage.getItem('wc_pin');
+  let saved = 0;
+  const failed = []; // B5: name exactly which games didn't save, instead of failing silently
+  for (const [gameId, pick] of toSave) {
+    try {
+      const res = await apiGet('predict', { user:ME, pin, gameId, winner:pick.winner, score1:pick.score1, score2:pick.score2 });
+      if (res.success) {
+        predictions.push({ game_id:gameId, user:ME, winner:pick.winner, score1:pick.score1, score2:pick.score2 });
+        delete draft[gameId]; saved++;
+        textEl.textContent = `Saved ${saved} / ${toSave.length}`;
+      } else {
+        const g = games.find(x => String(x.id) === String(gameId));
+        failed.push(g ? `${g.team1} vs ${g.team2}` : gameId);
+      }
+    } catch {
+      const g = games.find(x => String(x.id) === String(gameId));
+      failed.push(g ? `${g.team1} vs ${g.team2}` : gameId);
+    }
+  }
+
+  if (failed.length) {
+    textEl.textContent = `${saved}/${toSave.length} saved — failed: ${failed.join(', ')}`;
+    await new Promise(r => setTimeout(r, 2200)); // give them time to actually read it
+  }
+
+  saveEl.classList.remove('show');
+  buildCarousel(); // #4+#7: rebuilds with remaining pending (failed games included), or opens standings if none
+}
+
+// ── STANDINGS ─────────────────────────────────────────────────────────
+function openStandings() {
+  const sc = totals();
+  document.getElementById('st-pts-neil').textContent    = sc.neil;
+  document.getElementById('st-pts-eduardo').textContent = sc.eduardo;
+
+  const byRound = {};
+  for (const g of games) {
+    const r = g.round || 'Other';
+    if (!byRound[r]) byRound[r] = [];
+    byRound[r].push(g);
+  }
+  const rounds = Object.keys(byRound).sort((a,b) => {
+    const ai = ROUND_ORDER.indexOf(a), bi = ROUND_ORDER.indexOf(b);
+    return (ai<0?999:ai) - (bi<0?999:bi);
+  });
+
+  let html = '';
+  for (const r of rounds) {
+    for (const g of byRound[r]) {
+      const myP  = getPred(g.id, ME);
+      const thP  = getPred(g.id, THEM);
+      const hasR = !!(g.result_winner && String(g.result_winner).trim());
+
+      // Build pills for a given team side
+      const pillsFor = (team) => {
+        const users = [
+          { key: ME,   pred: myP,  revealable: true },
+          { key: THEM, pred: thP,  revealable: hasR || !!myP },
+        ];
+        return users
+          .filter(u => u.pred && u.pred.winner === team && u.revealable)
+          .map(u => {
+            const correct = hasR ? u.pred.winner === g.result_winner : null;
+            const cls = correct === true ? 'sg-pill--green' : correct === false ? 'sg-pill--red' : '';
+            return `<div class="sg-pill ${cls}">
+              <img class="sg-pfp" src="assets/${u.key}.png" alt="${cap(u.key)}" />
+              <span>${u.pred.score1} – ${u.pred.score2}</span>
+            </div>`;
+          }).join('');
+      };
+
+      const p1 = pillsFor(g.team1);
+      const p2 = pillsFor(g.team2);
+
+      const f1 = flagSrc(g.team1);
+      const f2 = flagSrc(g.team2);
+      const fl1 = f1 ? `<img class="sg-flag-img" src="${f1}" alt="${g.team1}" />` : `<div class="sg-flag-fb">${g.team1.slice(0,3).toUpperCase()}</div>`;
+      const fl2 = f2 ? `<img class="sg-flag-img" src="${f2}" alt="${g.team2}" />` : `<div class="sg-flag-fb">${g.team2.slice(0,3).toUpperCase()}</div>`;
+
+      const scoreEl = hasR
+        ? `<div class="sg-score">${g.result_score1} – ${g.result_score2}</div><div class="sg-ft">FT</div>`
+        : `<div class="sg-score sg-score--pending">– / –</div>`;
+
+      html += `
+<div class="sg-box">
+  <div class="sg-meta">${[g.round, g.venue].filter(Boolean).join(' · ')}</div>
+  <div class="sg-content">
+    <div class="sg-side">
+      <div class="sg-tname">${g.team1}</div>
+      <div class="sg-flag-col">
+        ${fl1}
+        ${p1 ? `<div class="sg-pills">${p1}</div>` : ''}
+      </div>
+    </div>
+    <div class="sg-center">${scoreEl}</div>
+    <div class="sg-side">
+      <div class="sg-tname">${g.team2}</div>
+      <div class="sg-flag-col">
+        ${fl2}
+        ${p2 ? `<div class="sg-pills">${p2}</div>` : ''}
+      </div>
+    </div>
+  </div>
+</div>`;
+    }
+  }
+
+  document.getElementById('st-body').innerHTML = html || '<div class="loading">No games yet.</div>';
+  document.getElementById('standings-modal').classList.add('open');
+}
+</script>
+</body>
+</html>
