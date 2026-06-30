@@ -327,7 +327,7 @@
 })();
 
 // ── CONFIG ──────────────────────────────────────────────────────────
-const API        = 'https://script.google.com/macros/s/AKfycbw_H7LXH40OTE3hvj4srHW_A5CDCiZNZZRb3MjQ-M4pEb3DS8I7_gRM1eWbVtfvInlR/exec';
+const API        = 'https://script.google.com/macros/s/AKfycbxpNHI0nkpK8OAtrvSiP8iyGHCXBSdLM1lTMiuJUnXKCXTngCfilvcVNtbQOPxZDxrI/exec';
 const FIFA_FLAGS = 'https://api.fifa.com/api/v3/picture/flags-sq-4/';
 const FIFA_CODES = {
   "Algeria":"ALG","Argentina":"ARG","Australia":"AUS","Austria":"AUT",
@@ -752,35 +752,47 @@ async function confirmLock() {
   if (lockBtn) lockBtn.disabled = true;
 
   saveEl.classList.add('show');
-  textEl.textContent = `Saved 0 / ${toSave.length}`;
+  textEl.textContent = `Submitting ${toSave.length} pick${toSave.length !== 1 ? 's' : ''}…`;
 
   const pin = sessionStorage.getItem('wc_pin');
-  let saved = 0;
-  const failed = []; // B5: name exactly which games didn't save, instead of failing silently
-  for (const [gameId, pick] of toSave) {
-    try {
-      const res = await apiGet('predict', { user:ME, pin, gameId, winner:pick.winner, score1:pick.score1, score2:pick.score2 });
-      if (res.success) {
-        predictions.push({ game_id:gameId, user:ME, winner:pick.winner, score1:pick.score1, score2:pick.score2 });
-        delete draft[gameId]; saved++;
-        textEl.textContent = `Saved ${saved} / ${toSave.length}`;
-      } else {
-        const g = games.find(x => String(x.id) === String(gameId));
-        failed.push(g ? `${g.team1} vs ${g.team2}` : gameId);
-      }
-    } catch {
-      const g = games.find(x => String(x.id) === String(gameId));
-      failed.push(g ? `${g.team1} vs ${g.team2}` : gameId);
-    }
-  }
+  const picks = toSave.map(([gameId, pick]) => ({
+    gameId, winner: pick.winner, score1: pick.score1, score2: pick.score2
+  }));
 
-  if (failed.length) {
-    textEl.textContent = `${saved}/${toSave.length} saved — failed: ${failed.join(', ')}`;
-    await new Promise(r => setTimeout(r, 2200)); // give them time to actually read it
+  try {
+    const res = await apiGet('submitPicks', { user: ME, pin, picks: JSON.stringify(picks) });
+
+    if (res.error) {
+      textEl.textContent = `Error: ${res.error}`;
+      await new Promise(r => setTimeout(r, 2000));
+    } else {
+      const savedIds  = new Set(res.saved  || []);
+      const skippedIds = new Set(res.skipped || []);
+
+      for (const [gameId, pick] of toSave) {
+        if (savedIds.has(String(gameId)) || skippedIds.has(String(gameId))) {
+          predictions.push({ game_id: gameId, user: ME, winner: pick.winner, score1: pick.score1, score2: pick.score2 });
+          delete draft[gameId];
+        }
+      }
+
+      // Surface any genuine failures (neither saved nor skipped)
+      const failed = toSave
+        .filter(([gameId]) => !savedIds.has(String(gameId)) && !skippedIds.has(String(gameId)))
+        .map(([gameId]) => { const g = games.find(x => String(x.id) === String(gameId)); return g ? `${g.team1} vs ${g.team2}` : gameId; });
+
+      if (failed.length) {
+        textEl.textContent = `${savedIds.size}/${toSave.length} saved — failed: ${failed.join(', ')}`;
+        await new Promise(r => setTimeout(r, 2200));
+      }
+    }
+  } catch {
+    textEl.textContent = 'Connection error — try again';
+    await new Promise(r => setTimeout(r, 2000));
   }
 
   saveEl.classList.remove('show');
-  buildCarousel(); // #4+#7: rebuilds with remaining pending (failed games included), or opens standings if none
+  buildCarousel();
 }
 
 // ── STANDINGS ─────────────────────────────────────────────────────────
