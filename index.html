@@ -22,7 +22,7 @@
     }
     html, body { height: 100%; }
     body { background: var(--bg); color: var(--white); font-family: 'Inter', sans-serif; min-height: 100vh; -webkit-font-smoothing: antialiased; }
-    body.logged-in { overflow:hidden; }
+    body.logged-in { overflow:hidden; background:#fff; }
 
     /* ── BG SLIDESHOW ── */
     #bg-slideshow { position:fixed; inset:0; z-index:0; pointer-events:none; transition:opacity .7s; }
@@ -73,7 +73,7 @@
 
     /* ── APP ── */
     #app { display:none; position:relative; z-index:10; min-height:100vh; flex-direction:column; }
-    body.logged-in #app { display:flex; }
+    body.logged-in #app { display:flex; height:100%; }
 
     /* ── CAROUSEL CONTAINER ── */
     .carousel-container { flex:1; display:flex; flex-direction:column; padding:1.25rem 0 .5rem; overflow:hidden; }
@@ -89,7 +89,7 @@
     .carousel-slide:not(.active) { filter:blur(2px) brightness(.32); transform:scale(.94); pointer-events:none; }
     .carousel-slide.active { filter:none; transform:scale(1); }
     @media (max-width:639px) {
-      .carousel-slide { flex:0 0 calc(100vw - 32px); max-width:none; }
+      .carousel-slide { flex:0 0 calc(100vw - 48px); max-width:none; }
       .carousel-slide:not(.active) { filter:none; transform:none; }
     }
 
@@ -177,7 +177,7 @@
     .dot.active { background:none; width:auto; height:auto; font-size:13px; line-height:1; cursor:default; }
 
     /* ── STANDINGS SHEET ── */
-    #standings-modal { position:fixed; inset:0; z-index:35; display:flex; flex-direction:column; background:#111; transition:transform .3s cubic-bezier(.4,0,.2,1); transform:translateY(100%); }
+    #standings-modal { position:fixed; inset:0; z-index:35; display:flex; flex-direction:column; background:#fff; transition:transform .3s cubic-bezier(.4,0,.2,1); transform:translateY(100%); }
     #standings-modal.open { transform:translateY(0); }
     .st-header { display:flex; align-items:center; justify-content:space-between; padding:.9rem 1.25rem; border-bottom:1px solid var(--line); flex-shrink:0; }
     .st-title  { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:2px; }
@@ -212,6 +212,29 @@
     .loading { text-align:center; padding:3.5rem 1rem; color:var(--dim); }
     .spinner { display:inline-block; width:28px; height:28px; border:2px solid rgba(255,255,255,.06); border-top-color:var(--gold); border-radius:50%; animation:spin .7s linear infinite; margin-bottom:.8rem; }
     @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── LIGHT MODE (logged-in) ── */
+    body.logged-in .dot { background:rgba(0,0,0,.2); }
+    body.logged-in .dot:hover { background:rgba(0,0,0,.45); }
+    body.logged-in .arrow-btn { background:rgba(0,0,0,.06); border-color:rgba(0,0,0,.12); color:rgba(0,0,0,.55); }
+    body.logged-in .arrow-btn:hover { background:rgba(0,0,0,.1); color:#111; }
+
+    #standings-modal .st-header { border-bottom-color:rgba(0,0,0,.1); }
+    #standings-modal .st-title { color:#111; }
+    #standings-modal .st-sp { color:#111; }
+    #standings-modal .st-vs { color:rgba(0,0,0,.4); }
+    #standings-modal .st-pfp-score { border-color:rgba(0,0,0,.12); }
+    #standings-modal .sg-box { background:rgba(0,0,0,.03); border-color:rgba(0,0,0,.1); }
+    #standings-modal .sg-meta { color:rgba(0,0,0,.38); }
+    #standings-modal .sg-tname { color:#111; }
+    #standings-modal .sg-score { color:#111; }
+    #standings-modal .sg-score--pending { color:rgba(0,0,0,.25); }
+    #standings-modal .sg-flag-fb { background:rgba(0,0,0,.06); color:rgba(0,0,0,.4); }
+    #standings-modal .sg-pill { background:rgba(0,0,0,.09); color:#222; }
+    #standings-modal .sg-pill--green,
+    #standings-modal .sg-pill--red { color:#fff; }
+    #standings-modal .loading { color:rgba(0,0,0,.4); }
+    #standings-modal .spinner { border-color:rgba(0,0,0,.08); border-top-color:var(--gold); }
   </style>
 </head>
 <body>
@@ -231,7 +254,7 @@
     <img src="assets/wc-logo.png" class="pin-logo" alt="" />
     <div class="pin-eyebrow">FIFA World Cup 2026</div>
     <div class="pin-title">PREDICTIONS</div>
-    <div class="pin-sub">Welcome, let the games begin!</div>
+    <div class="pin-sub">Enter your PIN to continue</div>
     <div class="pin-boxes">
       <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" />
       <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" />
@@ -357,7 +380,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'ArrowLeft')  goTo(currentIdx - 1);
   });
   const saved = sessionStorage.getItem('wc_session');
-  if (saved) attemptLoad(JSON.parse(saved).pin);
+  if (saved) {
+    const { pin, user } = JSON.parse(saved);
+    document.querySelector('.pin-sub').textContent = `Welcome back, ${cap(user)}`;
+    document.querySelector('.pin-boxes').style.display = 'none';
+    const btn = document.getElementById('pin-btn');
+    btn.textContent = 'Enter the arena →';
+    btn.onclick = () => attemptLoad(pin);
+  }
 });
 
 // ── AUTH ─────────────────────────────────────────────────────────────
@@ -493,7 +523,7 @@ function esc(s) { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 function buildCarousel() {
   // #4: only show games where user hasn't predicted yet
   const pending = [...games]
-    .filter(g => !getPred(g.id, ME))
+    .filter(g => !getPred(g.id, ME) && !g.result_winner)
     .sort((a,b) => {
       const ai=ROUND_ORDER.indexOf(a.round), bi=ROUND_ORDER.indexOf(b.round);
       return (ai<0?999:ai)-(bi<0?999:bi);
