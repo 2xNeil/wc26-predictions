@@ -78,15 +78,16 @@
     /* ── CAROUSEL CONTAINER ── */
     .carousel-container { flex:1; display:flex; flex-direction:column; padding:1.25rem 0 .5rem; overflow:hidden; }
     .carousel-row { display:flex; align-items:center; flex:1; }
-    .arrow-btn { display:none; flex-shrink:0; width:36px; height:36px; background:rgba(255,255,255,.07); border:1px solid var(--line); border-radius:50%; color:rgba(255,255,255,.6); font-size:1.1rem; cursor:pointer; align-items:center; justify-content:center; margin:0 .5rem; transition:background .15s,color .15s; }
-    .arrow-btn:hover { background:rgba(255,255,255,.12); color:var(--white); }
-    .arrow-btn:disabled { opacity:.22; cursor:default; }
+    .arrow-btn { display:none; flex-shrink:0; width:34px; height:60px; background:rgba(212,175,55,.12); border:1.5px solid rgba(212,175,55,.5); border-radius:17px; color:rgba(212,175,55,.9); cursor:pointer; align-items:center; justify-content:center; margin:0 .75rem; transition:background .15s,border-color .15s,color .15s; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); padding:0; }
+    .arrow-btn svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+    .arrow-btn:hover { background:rgba(212,175,55,.22); border-color:rgba(212,175,55,.8); color:#d4af37; }
+    .arrow-btn:disabled { opacity:.2; cursor:default; }
     @media (min-width:640px) { .arrow-btn { display:flex; } }
     #carousel-outer { flex:1; overflow:hidden; }
     #carousel-track { display:flex; align-items:stretch; transition:transform .42s cubic-bezier(.35,0,.25,1); will-change:transform; }
 
     .carousel-slide { flex:0 0 80vw; max-width:400px; height:var(--slide-h,540px); margin-right:14px; transition:filter .32s ease,transform .32s ease; }
-    .carousel-slide:not(.active) { filter:blur(2px) brightness(.32); transform:scale(.94); pointer-events:none; }
+    .carousel-slide:not(.active) { filter:blur(2px) brightness(.55); transform:scale(.94); pointer-events:none; }
     .carousel-slide.active { filter:none; transform:scale(1); }
     @media (max-width:639px) {
       .carousel-slide { flex:0 0 calc(100vw - 48px); max-width:none; }
@@ -151,7 +152,8 @@
     .pc-result-score { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; line-height:1; }
 
     /* ── FINAL CARD ── */
-    .pred-card:not(.final-card) { backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); background:rgba(0,0,0,.28); }
+    .pred-card { backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); }
+    .pred-card:not(.final-card) { background:rgba(0,0,0,.28); }
     .pred-card.final-card { justify-content:center; align-items:center; text-align:center; gap:.9rem; background:radial-gradient(ellipse at 50% 0%,rgba(201,162,39,.13) 0%,rgba(0,0,0,0) 65%),linear-gradient(155deg,rgba(255,255,255,.05) 0%,rgba(255,255,255,.02) 100%); border-color:rgba(201,162,39,.28); }
     .fc-bg-logo { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:78%; pointer-events:none; user-select:none; opacity:.055; }
     .fc-bg-logo img { width:100%; object-fit:contain; }
@@ -248,11 +250,11 @@
 <div id="app">
   <div class="carousel-container">
     <div class="carousel-row">
-      <button class="arrow-btn" id="arr-left"  onclick="goTo(currentIdx-1)">‹</button>
+      <button class="arrow-btn" id="arr-left"  onclick="goTo(currentIdx-1)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
       <div id="carousel-outer">
         <div id="carousel-track"></div>
       </div>
-      <button class="arrow-btn" id="arr-right" onclick="goTo(currentIdx+1)">›</button>
+      <button class="arrow-btn" id="arr-right" onclick="goTo(currentIdx+1)"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
     </div>
     <div id="carousel-dots"></div>
   </div>
@@ -290,21 +292,36 @@
   a.src = imgs[idx];
   b.src = imgs[(idx + 1) % imgs.length];
 
-  let started = false;
+  let started = false, intervalId = null;
   function startSlideshow() {
-    if (started) return; // B2: guard against ended/error/play-rejection firing more than once
+    if (started) return;
     started = true;
     video.classList.add('fade-out');
     a.classList.add('active');
     setTimeout(() => { video.style.display = 'none'; }, 1000);
-    setInterval(() => {
+    intervalId = setInterval(() => {
       idx = (idx + 1) % imgs.length;
       nxt.src = imgs[(idx + 1) % imgs.length];
       nxt.classList.add('active');
       cur.classList.remove('active');
       [cur, nxt] = [nxt, cur];
-    }, 2500);
+    }, 5000);
   }
+  window._bgRestart = function() {
+    if (!started) return;
+    started = false;
+    if (intervalId) { clearInterval(intervalId); intervalId = null; }
+    a.classList.remove('active');
+    b.classList.remove('active');
+    cur = a; nxt = b;
+    idx = Math.floor(Math.random() * imgs.length);
+    a.src = imgs[idx];
+    b.src = imgs[(idx + 1) % imgs.length];
+    video.style.display = '';
+    video.classList.remove('fade-out');
+    video.currentTime = 0;
+    video.play().catch(startSlideshow);
+  };
 
   // B1: if autoplay is blocked, play() rejects immediately — switch to images right away
   const playPromise = video.play();
@@ -411,6 +428,7 @@ async function verifyPin() {
       setSession(res.user, res.opponent, pin);
       document.getElementById('pin-overlay').classList.add('hidden');
       document.body.classList.add('logged-in');
+      window._bgRestart?.();
       loadData();
     } else {
       err.textContent = '❌ Wrong PIN — try again';
@@ -426,6 +444,7 @@ async function attemptLoad(pin) {
       setSession(res.user, res.opponent, pin);
       document.getElementById('pin-overlay').classList.add('hidden');
       document.body.classList.add('logged-in');
+      window._bgRestart?.();
       loadData();
     } else sessionStorage.removeItem('wc_session');
   } catch {}
