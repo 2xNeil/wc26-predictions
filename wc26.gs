@@ -13,34 +13,17 @@ function doGet(e) {
   }
 
   if (action === 'verifyPin') {
-    const { user, pin } = e.parameter;
+    const { pin } = e.parameter;
     const rows = ss.getSheetByName('users').getDataRange().getValues().slice(1);
-    const match = rows.find(r => r[0] === user && String(r[1]) === String(pin));
-    return json({ valid: !!match });
-  }
-
-  if (action === 'predict') {
-    const { user, pin, gameId, winner, score1, score2 } = e.parameter;
-
-    // Verify PIN
-    const userRows = ss.getSheetByName('users').getDataRange().getValues().slice(1);
-    const validUser = userRows.find(r => r[0] === user && String(r[1]) === String(pin));
-    if (!validUser) return json({ error: 'Invalid PIN' });
-
-    // One-time lock: don't overwrite existing prediction
-    const predSheet = ss.getSheetByName('predictions');
-    const predRows = predSheet.getDataRange().getValues().slice(1);
-    const exists = predRows.find(r => String(r[0]) === String(gameId) && r[1] === user);
-    if (exists) return json({ error: 'Already locked in' });
-
-    predSheet.appendRow([gameId, user, winner, Number(score1), Number(score2), new Date().toISOString()]);
-    return json({ success: true });
+    const match = rows.find(r => String(r[1]) === String(pin));
+    if (!match) return json({ valid: false });
+    return json({ valid: true, user: match[0], opponent: match[2] });
   }
 
   if (action === 'submitPicks') {
     const { user, pin, picks } = e.parameter;
 
-    // Verify PIN once
+    // Verify PIN and that it belongs to this user
     const userRows = ss.getSheetByName('users').getDataRange().getValues().slice(1);
     const validUser = userRows.find(r => r[0] === user && String(r[1]) === String(pin));
     if (!validUser) return json({ error: 'Invalid PIN' });
@@ -65,10 +48,9 @@ function doGet(e) {
       saved.push(String(pick.gameId));
     }
 
-    // Single bulk write instead of N appendRow calls
     if (rowsToWrite.length) {
       predSheet.getRange(predSheet.getLastRow() + 1, 1, rowsToWrite.length, rowsToWrite[0].length)
-              .setValues(rowsToWrite);
+               .setValues(rowsToWrite);
     }
 
     return json({ success: true, saved, skipped });

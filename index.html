@@ -33,13 +33,6 @@
     #vignette { position:fixed; inset:0; z-index:1; pointer-events:none; background:linear-gradient(to bottom,rgba(0,0,0,.25) 0%,rgba(0,0,0,.32) 40%,rgba(0,0,0,.82) 80%,rgba(0,0,0,.92) 100%); transition:opacity .7s; }
     body.logged-in #vignette { opacity:0; pointer-events:none; }
 
-    /* ── NO USER ── */
-    #no-user { display:none; position:fixed; inset:0; z-index:50; flex-direction:column; align-items:center; justify-content:center; gap:.75rem; text-align:center; padding:2rem; }
-    #no-user.show { display:flex; }
-    #no-user img { width:48px; opacity:.4; }
-    #no-user h2  { font-family:'Bebas Neue',sans-serif; font-size:1.7rem; letter-spacing:2px; }
-    #no-user p   { color:var(--dim); font-size:.82rem; }
-    #no-user code { background:var(--faint); padding:.1rem .4rem; border-radius:4px; }
 
     /* ── PIN (centred) ── */
     #pin-overlay { position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center; transition:opacity .4s; }
@@ -232,18 +225,12 @@
 </div>
 <div id="vignette"></div>
 
-<div id="no-user">
-  <img src="assets/wc-logo.png" alt="" />
-  <h2>WC 2026 Predictions</h2>
-  <p>Add <code>?user=neil</code> or <code>?user=eduardo</code> to the URL</p>
-</div>
-
 <div id="pin-overlay">
   <div class="pin-card">
     <img src="assets/wc-logo.png" class="pin-logo" alt="" />
     <div class="pin-eyebrow">FIFA World Cup 2026</div>
     <div class="pin-title">PREDICTIONS</div>
-    <div class="pin-sub">Welcome, <strong id="pin-user-name"></strong>!</div>
+    <div class="pin-sub">Welcome, let the games begin!</div>
     <div class="pin-boxes">
       <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" />
       <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" />
@@ -277,9 +264,9 @@
   <div class="st-header">
     <span class="st-title">Standings</span>
     <div class="st-scores">
-      <div class="st-si"><img class="st-pfp-score" src="assets/neil.png" alt="Neil" /><div class="st-sp" id="st-pts-neil">0</div></div>
+      <div class="st-si"><img class="st-pfp-score" id="st-pfp-me" src="" alt="" /><div class="st-sp" id="st-pts-me">0</div></div>
       <div class="st-vs">vs</div>
-      <div class="st-si"><img class="st-pfp-score" src="assets/eduardo.png" alt="Eduardo" /><div class="st-sp" id="st-pts-eduardo">0</div></div>
+      <div class="st-si"><img class="st-pfp-score" id="st-pfp-them" src="" alt="" /><div class="st-sp" id="st-pts-them">0</div></div>
     </div>
   </div>
   <div class="st-body" id="st-body"><div class="loading"><div class="spinner"></div></div></div>
@@ -378,15 +365,11 @@ const FIFA_CODES = {
   "Uruguay": "URU",
   "USA": "USA",
   "Uzbekistan": "UZB",
-};
-const ROUND_ORDER = ['Round of 32','Round of 16','Quarter-finals','Semi-finals','Third Place Playoff','Final'];
+};const ROUND_ORDER = ['Round of 32','Round of 16','Quarter-finals','Semi-finals','Third Place Playoff','Final'];
 const SLIDE_GAP   = 14;
 
 // ── STATE ────────────────────────────────────────────────────────────
-const params  = new URLSearchParams(window.location.search);
-const ME      = (params.get('user') || '').toLowerCase();
-const THEM    = ME === 'neil' ? 'eduardo' : 'neil';
-const ME_NAME = cap(ME);
+let ME = '', THEM = '', ME_NAME = '';
 let games = [], predictions = [];
 const draft = {};
 let currentIdx = 0, totalSlides = 0, touchInited = false;
@@ -395,22 +378,20 @@ window._slideW = 300; window._peek = 40;
 function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : ''; }
 
 // ── BOOT ─────────────────────────────────────────────────────────────
+function setSession(user, opponent, pin) {
+  ME = user; THEM = opponent; ME_NAME = cap(ME);
+  sessionStorage.setItem('wc_session', JSON.stringify({ pin, user, opponent }));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  if (!['neil','eduardo'].includes(ME)) {
-    document.getElementById('pin-overlay').classList.add('hidden');
-    document.getElementById('no-user').classList.add('show');
-    return;
-  }
-  // #1 fix: set pin-user-name (removed the dead chip-pfp/chip-name refs that were crashing this)
-  document.getElementById('pin-user-name').textContent = ME_NAME;
   initPinBoxes();
   document.addEventListener('keydown', e => {
     if (document.getElementById('standings-modal').classList.contains('open')) return;
     if (e.key === 'ArrowRight') goTo(currentIdx + 1);
     if (e.key === 'ArrowLeft')  goTo(currentIdx - 1);
   });
-  const saved = sessionStorage.getItem('wc_pin');
-  if (saved) attemptLoad(saved);
+  const saved = sessionStorage.getItem('wc_session');
+  if (saved) attemptLoad(JSON.parse(saved).pin);
 });
 
 // ── AUTH ─────────────────────────────────────────────────────────────
@@ -460,9 +441,9 @@ async function verifyPin() {
   const btn = document.getElementById('pin-btn');
   btn.disabled = true; btn.textContent = 'Checking…'; err.textContent = '';
   try {
-    const res = await apiGet('verifyPin', { user: ME, pin });
+    const res = await apiGet('verifyPin', { pin });
     if (res.valid) {
-      sessionStorage.setItem('wc_pin', pin);
+      setSession(res.user, res.opponent, pin);
       document.getElementById('pin-overlay').classList.add('hidden');
       document.body.classList.add('logged-in');
       loadData();
@@ -475,12 +456,13 @@ async function verifyPin() {
 }
 async function attemptLoad(pin) {
   try {
-    const res = await apiGet('verifyPin', { user: ME, pin });
+    const res = await apiGet('verifyPin', { pin });
     if (res.valid) {
+      setSession(res.user, res.opponent, pin);
       document.getElementById('pin-overlay').classList.add('hidden');
       document.body.classList.add('logged-in');
       loadData();
-    } else sessionStorage.removeItem('wc_pin');
+    } else sessionStorage.removeItem('wc_session');
   } catch {}
 }
 
@@ -535,8 +517,8 @@ function calcPts(pred, game) {
   return p;
 }
 function totals() {
-  const s={neil:0,eduardo:0};
-  for (const g of games) { if (!g.result_winner) continue; for (const u of ['neil','eduardo']) s[u]+=calcPts(getPred(g.id,u),g); }
+  const s = { [ME]: 0, [THEM]: 0 };
+  for (const g of games) { if (!g.result_winner) continue; for (const u of [ME, THEM]) s[u] += calcPts(getPred(g.id, u), g); }
   return s;
 }
 function esc(s) { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
@@ -839,8 +821,12 @@ async function confirmLock() {
 // ── STANDINGS ─────────────────────────────────────────────────────────
 function openStandings() {
   const sc = totals();
-  document.getElementById('st-pts-neil').textContent    = sc.neil;
-  document.getElementById('st-pts-eduardo').textContent = sc.eduardo;
+  document.getElementById('st-pfp-me').src    = `assets/${ME}.png`;
+  document.getElementById('st-pfp-me').alt    = ME_NAME;
+  document.getElementById('st-pfp-them').src  = `assets/${THEM}.png`;
+  document.getElementById('st-pfp-them').alt  = cap(THEM);
+  document.getElementById('st-pts-me').textContent   = sc[ME];
+  document.getElementById('st-pts-them').textContent = sc[THEM];
 
   const byRound = {};
   for (const g of games) {
