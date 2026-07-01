@@ -90,7 +90,8 @@
     .carousel-slide:not(.active) { filter:none; transform:none; pointer-events:none; }
     .carousel-slide.active { filter:none; transform:scale(1); }
     @media (min-width:640px) {
-      #carousel-outer { max-width:420px; }
+      .carousel-row { justify-content:center; }
+      #carousel-outer { flex:0 0 420px; max-width:420px; }
       .carousel-slide { flex:0 0 100%; max-width:none; }
       .carousel-slide:not(.active) { opacity:0; }
       .carousel-slide.active { opacity:1; }
@@ -103,7 +104,7 @@
       border:1px solid rgba(255,255,255,.12); border-radius:20px;
       padding:1.5rem 1.25rem .9rem;
       display:flex; flex-direction:column; gap:0;
-      box-shadow:0 40px 100px rgba(0,0,0,.55),0 2px 0 rgba(255,255,255,.06) inset;
+      box-shadow:0 2px 0 rgba(255,255,255,.06) inset;
       position:relative; overflow:hidden; isolation:isolate;
     }
     .pred-card::before {
@@ -118,8 +119,8 @@
 
     .pc-winner { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
     .wb { display:flex; align-items:center; gap:.6rem; padding:.85rem .9rem; background:rgba(255,255,255,.04); border:1.5px solid rgba(255,255,255,.1); border-radius:13px; color:var(--white); cursor:pointer; transition:border-color .18s,background .18s,box-shadow .18s; }
-    .wb:hover:not(:disabled) { border-color:rgba(255,255,255,.22); }
-    .wb.sel { border-color:var(--gold); background:rgba(201,162,39,.1); box-shadow:0 0 22px rgba(201,162,39,.18),inset 0 0 14px rgba(201,162,39,.04); }
+    .wb:hover:not(:disabled):not(.sel) { border-color:rgba(255,255,255,.22); }
+    .wb.sel { border-color:var(--gold); background:rgba(201,162,39,.12); box-shadow:inset 0 0 28px rgba(201,162,39,.35); }
     .wb:not(.sel):disabled { opacity:.42; cursor:default; }
     .wb.sel:disabled { cursor:default; }
     .wb.left-btn  { flex-direction:row; }
@@ -237,14 +238,14 @@
     <img src="assets/wc-logo.png" class="pin-logo" alt="" />
     <div class="pin-eyebrow">FIFA World Cup 2026</div>
     <div class="pin-title">PREDICTIONS</div>
-    <div class="pin-sub">Enter your PIN to continue</div>
+    <div class="pin-sub">Welcome, let the games begin!</div>
     <div class="pin-boxes">
       <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" />
       <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" />
       <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" />
       <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" />
     </div>
-    <button id="pin-btn" onclick="verifyPin()">Enter the arena →</button>
+    <button id="pin-btn" onclick="verifyPin()">Enter the arena</button>
     <div id="pin-error"></div>
   </div>
 </div>
@@ -300,7 +301,6 @@
     started = true;
     video.classList.add('fade-out');
     a.classList.add('active');
-    setTimeout(() => { video.style.display = 'none'; }, 1000);
     intervalId = setInterval(() => {
       idx = (idx + 1) % imgs.length;
       nxt.src = imgs[(idx + 1) % imgs.length];
@@ -319,7 +319,6 @@
     idx = Math.floor(Math.random() * imgs.length);
     a.src = imgs[idx];
     b.src = imgs[(idx + 1) % imgs.length];
-    video.style.display = '';
     video.classList.remove('fade-out');
     video.currentTime = 0;
     video.play().catch(startSlideshow);
@@ -437,7 +436,7 @@ async function verifyPin() {
       resetPinBoxes();
     }
   } catch { err.textContent = '⚠️ Connection error'; resetPinBoxes(); }
-  finally  { btn.disabled = false; btn.textContent = 'Enter the arena →'; }
+  finally  { btn.disabled = false; btn.textContent = 'Enter the arena'; }
 }
 async function attemptLoad(pin) {
   try {
