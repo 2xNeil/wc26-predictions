@@ -22,17 +22,17 @@
     }
     html, body { height: 100%; }
     body { background: var(--bg); color: var(--white); font-family: 'Inter', sans-serif; min-height: 100vh; -webkit-font-smoothing: antialiased; }
-    body.logged-in { overflow:hidden; background:#fff; }
+    body.logged-in { overflow:hidden; }
 
     /* ── BG SLIDESHOW ── */
     #bg-slideshow { position:fixed; inset:0; z-index:0; pointer-events:none; transition:opacity .7s; }
-    body.logged-in #bg-slideshow { opacity:0; pointer-events:none; }
+
     #bg-video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; opacity:1; transition:opacity 1s ease-in-out; }
     #bg-video.fade-out { opacity:0; }
     #bg-slideshow img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; opacity:0; transition:opacity 1.2s ease-in-out; }
     #bg-slideshow img.active { opacity:1; }
     #vignette { position:fixed; inset:0; z-index:1; pointer-events:none; background:linear-gradient(to bottom,rgba(0,0,0,.25) 0%,rgba(0,0,0,.32) 40%,rgba(0,0,0,.82) 80%,rgba(0,0,0,.92) 100%); transition:opacity .7s; }
-    body.logged-in #vignette { opacity:0; pointer-events:none; }
+    body.logged-in #vignette { opacity:.6; }
 
 
     /* ── PIN (centred) ── */
@@ -96,7 +96,8 @@
     /* ── PREDICTION CARD ── */
     .pred-card {
       height:100%;
-      background:linear-gradient(155deg,rgba(8,8,8,.82) 0%,rgba(8,8,8,.90) 100%);
+      background:rgba(0,0,0,.04);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
       border:1px solid rgba(255,255,255,.12); border-radius:20px;
       padding:1.5rem 1.25rem .9rem;
       display:flex; flex-direction:column; gap:0;
@@ -177,7 +178,7 @@
     .dot.active { background:none; width:auto; height:auto; font-size:13px; line-height:1; cursor:default; }
 
     /* ── STANDINGS SHEET ── */
-    #standings-modal { position:fixed; inset:0; z-index:35; display:flex; flex-direction:column; background:#fff; transition:transform .3s cubic-bezier(.4,0,.2,1); transform:translateY(100%); }
+    #standings-modal { position:fixed; inset:0; z-index:35; display:flex; flex-direction:column; background:#111; transition:transform .3s cubic-bezier(.4,0,.2,1); transform:translateY(100%); }
     #standings-modal.open { transform:translateY(0); }
     .st-header { display:flex; align-items:center; justify-content:space-between; padding:.9rem 1.25rem; border-bottom:1px solid var(--line); flex-shrink:0; }
     .st-title  { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:2px; }
@@ -213,28 +214,6 @@
     .spinner { display:inline-block; width:28px; height:28px; border:2px solid rgba(255,255,255,.06); border-top-color:var(--gold); border-radius:50%; animation:spin .7s linear infinite; margin-bottom:.8rem; }
     @keyframes spin { to { transform:rotate(360deg); } }
 
-    /* ── LIGHT MODE (logged-in) ── */
-    body.logged-in .dot { background:rgba(0,0,0,.2); }
-    body.logged-in .dot:hover { background:rgba(0,0,0,.45); }
-    body.logged-in .arrow-btn { background:rgba(0,0,0,.06); border-color:rgba(0,0,0,.12); color:rgba(0,0,0,.55); }
-    body.logged-in .arrow-btn:hover { background:rgba(0,0,0,.1); color:#111; }
-
-    #standings-modal .st-header { border-bottom-color:rgba(0,0,0,.1); }
-    #standings-modal .st-title { color:#111; }
-    #standings-modal .st-sp { color:#111; }
-    #standings-modal .st-vs { color:rgba(0,0,0,.4); }
-    #standings-modal .st-pfp-score { border-color:rgba(0,0,0,.12); }
-    #standings-modal .sg-box { background:rgba(0,0,0,.03); border-color:rgba(0,0,0,.1); }
-    #standings-modal .sg-meta { color:rgba(0,0,0,.38); }
-    #standings-modal .sg-tname { color:#111; }
-    #standings-modal .sg-score { color:#111; }
-    #standings-modal .sg-score--pending { color:rgba(0,0,0,.25); }
-    #standings-modal .sg-flag-fb { background:rgba(0,0,0,.06); color:rgba(0,0,0,.4); }
-    #standings-modal .sg-pill { background:rgba(0,0,0,.09); color:#222; }
-    #standings-modal .sg-pill--green,
-    #standings-modal .sg-pill--red { color:#fff; }
-    #standings-modal .loading { color:rgba(0,0,0,.4); }
-    #standings-modal .spinner { border-color:rgba(0,0,0,.08); border-top-color:var(--gold); }
   </style>
 </head>
 <body>
