@@ -73,7 +73,7 @@
 
     /* ── APP ── */
     #app { display:none; position:relative; z-index:10; min-height:100vh; flex-direction:column; }
-    body.logged-in #app { display:flex; height:100%; }
+    body.logged-in #app { display:flex; height:100dvh; }
 
     /* ── CAROUSEL CONTAINER ── */
     .carousel-container { flex:1; display:flex; flex-direction:column; padding:1.25rem 0 .5rem; overflow:hidden; }
@@ -97,16 +97,15 @@
     .pred-card {
       height:100%;
       background:rgba(0,0,0,.04);
-      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
       border:1px solid rgba(255,255,255,.12); border-radius:20px;
       padding:1.5rem 1.25rem .9rem;
       display:flex; flex-direction:column; gap:0;
-      box-shadow:0 8px 40px rgba(0,0,0,.6),0 2px 8px rgba(0,0,0,.35);
+      box-shadow:0 40px 100px rgba(0,0,0,.55),0 2px 0 rgba(255,255,255,.06) inset;
       position:relative; overflow:hidden; isolation:isolate;
     }
     .pred-card::before {
       content:''; position:absolute; inset:0; border-radius:inherit; z-index:-1;
-      background-image:var(--card-bg-img); background-size:cover; background-position:center; opacity:.15;
+      background-image:none;
     }
     .pc-meta { font-size:.68rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--gold); line-height:1.4; margin-bottom:.65rem; }
     .pc-vs { font-family:'Bebas Neue',sans-serif; font-size:clamp(1.85rem,6.5vw,2.6rem); letter-spacing:1.5px; line-height:1.05; margin-bottom:1.5rem; }
@@ -152,6 +151,7 @@
     .pc-result-score { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; line-height:1; }
 
     /* ── FINAL CARD ── */
+    .pred-card:not(.final-card) { backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); background:rgba(0,0,0,.28); }
     .pred-card.final-card { justify-content:center; align-items:center; text-align:center; gap:.9rem; background:radial-gradient(ellipse at 50% 0%,rgba(201,162,39,.13) 0%,rgba(0,0,0,0) 65%),linear-gradient(155deg,rgba(255,255,255,.05) 0%,rgba(255,255,255,.02) 100%); border-color:rgba(201,162,39,.28); }
     .fc-bg-logo { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:78%; pointer-events:none; user-select:none; opacity:.055; }
     .fc-bg-logo img { width:100%; object-fit:contain; }
@@ -358,15 +358,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'ArrowRight') goTo(currentIdx + 1);
     if (e.key === 'ArrowLeft')  goTo(currentIdx - 1);
   });
-  const saved = sessionStorage.getItem('wc_session');
-  if (saved) {
-    const { pin, user } = JSON.parse(saved);
-    document.querySelector('.pin-sub').textContent = `Welcome back, ${cap(user)}`;
-    document.querySelector('.pin-boxes').style.display = 'none';
-    const btn = document.getElementById('pin-btn');
-    btn.textContent = 'Enter the arena →';
-    btn.onclick = () => attemptLoad(pin);
-  }
 });
 
 // ── AUTH ─────────────────────────────────────────────────────────────
@@ -379,7 +370,6 @@ function initPinBoxes() {
       e.target.value = v;
       e.target.classList.toggle('filled', !!v);
       if (v && i < boxes.length - 1) boxes[i + 1].focus({ preventScroll: true });
-      if (i === boxes.length - 1 && v) verifyPin();
     });
     box.addEventListener('keydown', e => {
       if (e.key === 'Backspace' && !box.value && i > 0) {
@@ -752,7 +742,7 @@ async function confirmLock() {
   saveEl.classList.add('show');
   textEl.textContent = `Submitting ${toSave.length} pick${toSave.length !== 1 ? 's' : ''}…`;
 
-  const pin = sessionStorage.getItem('wc_pin');
+  const pin = JSON.parse(sessionStorage.getItem('wc_session') || '{}').pin;
   const picks = toSave.map(([gameId, pick]) => ({
     gameId, winner: pick.winner, score1: pick.score1, score2: pick.score2
   }));
