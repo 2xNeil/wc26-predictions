@@ -5,7 +5,7 @@
 <h1 align="center">WC26 Predictions</h1>
 
 <p align="center">
-  A two-player FIFA World Cup 2026 predictions game.
+  A two player FIFA World Cup 2026 predictions game.
 </p>
 
 <p align="center">
@@ -17,13 +17,6 @@ Pick the winner and score for every match, lock in your picks before kickoff, an
 Built as a single static HTML page, hosted on GitHub Pages, with Google Sheets as a rudimentary database.
 
 ## How it works
-
-- Each player gets a personal link: `?user=neil` or `?user=eduardo`
-
-  <p>
-    <img src="assets/neil.png" width="48" height="48" style="border-radius:50%" alt="Neil" />
-    <img src="assets/eduardo.png" width="48" height="48" style="border-radius:50%" alt="Eduardo" />
-  </p>
 
 - Logging in requires a 4-digit PIN
 - Once in, you're shown a swipeable carousel of upcoming matches not predicted yet. 
