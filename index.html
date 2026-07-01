@@ -86,12 +86,14 @@
     #carousel-outer { flex:1; overflow:hidden; }
     #carousel-track { display:flex; align-items:stretch; transition:transform .42s cubic-bezier(.35,0,.25,1); will-change:transform; }
 
-    .carousel-slide { flex:0 0 80vw; max-width:400px; height:var(--slide-h,540px); margin-right:14px; transition:filter .32s ease,transform .32s ease; }
-    .carousel-slide:not(.active) { filter:blur(2px) brightness(.55); transform:scale(.94); pointer-events:none; }
+    .carousel-slide { flex:0 0 calc(100vw - 48px); max-width:none; height:var(--slide-h,540px); margin-right:14px; transition:filter .32s ease,transform .32s ease; }
+    .carousel-slide:not(.active) { filter:none; transform:none; pointer-events:none; }
     .carousel-slide.active { filter:none; transform:scale(1); }
-    @media (max-width:639px) {
-      .carousel-slide { flex:0 0 calc(100vw - 48px); max-width:none; }
-      .carousel-slide:not(.active) { filter:none; transform:none; }
+    @media (min-width:640px) {
+      #carousel-outer { max-width:420px; }
+      .carousel-slide { flex:0 0 100%; max-width:none; }
+      .carousel-slide:not(.active) { opacity:0; }
+      .carousel-slide.active { opacity:1; }
     }
 
     /* ── PREDICTION CARD ── */
@@ -558,7 +560,7 @@ function buildCarousel() {
       const isMobile = window.innerWidth < 640;
       const outerW = outer.offsetWidth;
       const slideW = slide.offsetWidth;
-      const peek   = Math.max(0, (outerW - slideW) / 2);
+      const peek   = isMobile ? Math.max(0, (outerW - slideW) / 2) : 0;
       track.style.paddingLeft = peek + 'px';
       window._slideW = slideW;
       window._peek   = peek;
