@@ -505,7 +505,7 @@ function calcPts(pred, game) {
 function totals() {
   const s = { [ME]: 0, [THEM]: 0 };
   const players = [(ME||'').toLowerCase(), (THEM||'').toLowerCase()];
-  const startFrom = players.includes('sergio') ? 6 : players.includes('charu') ? 5 : 1; 
+  const startFrom = players.includes('sergio') ? 7 : players.includes('charu') ? 5 : 1; 
   for (const g of games) {
     if (!g.result_winner) continue;
     if (parseInt(g.id.replace(/\D/g,'')) < startFrom) continue;
@@ -822,7 +822,7 @@ function openStandings() {
 
   const byRound = {};
   const players = [(ME||'').toLowerCase(), (THEM||'').toLowerCase()];
-  const startFrom = players.includes('sergio') ? 6 : players.includes('charu') ? 5 : 1;
+  const startFrom = players.includes('sergio') ? 7 : players.includes('charu') ? 5 : 1;
   for (const g of games) {
     if (parseInt(g.id.replace(/\D/g,'')) < startFrom) continue;
     const r = g.round || 'Other';
