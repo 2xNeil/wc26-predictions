@@ -504,10 +504,11 @@ function calcPts(pred, game) {
 }
 function totals() {
   const s = { [ME]: 0, [THEM]: 0 };
-  const lateStart = ['sergio','charu'].includes(THEM.toLowerCase()) || ['sergio','charu'].includes(ME.toLowerCase());
+  const opponent = (THEM || '').toLowerCase();
+  const startFrom = opponent === 'sergio' ? 6 : opponent === 'charu' ? 5 : 1;
   for (const g of games) {
     if (!g.result_winner) continue;
-    if (lateStart && parseInt(g.id.replace(/\D/g,'')) < 6) continue;
+    if (parseInt(g.id.replace(/\D/g,'')) < startFrom) continue;
     for (const u of [ME, THEM]) s[u] += calcPts(getPred(g.id, u), g);
   }
   return s;
@@ -820,7 +821,10 @@ function openStandings() {
   document.getElementById('st-pts-them').textContent = sc[THEM];
 
   const byRound = {};
+  const opponent = (THEM || '').toLowerCase();
+  const startFrom = opponent === 'sergio' ? 6 : opponent === 'charu' ? 5 : 1;
   for (const g of games) {
+    if (parseInt(g.id) < startFrom) continue;
     const r = g.round || 'Other';
     if (!byRound[r]) byRound[r] = [];
     byRound[r].push(g);
