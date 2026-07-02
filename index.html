@@ -504,7 +504,12 @@ function calcPts(pred, game) {
 }
 function totals() {
   const s = { [ME]: 0, [THEM]: 0 };
-  for (const g of games) { if (!g.result_winner) continue; for (const u of [ME, THEM]) s[u] += calcPts(getPred(g.id, u), g); }
+  const lateStart = ['sergio','charu'].includes(THEM.toLowerCase()) || ['sergio','charu'].includes(ME.toLowerCase());
+  for (const g of games) {
+    if (!g.result_winner) continue;
+    if (lateStart && parseInt(g.id.replace(/\D/g,'')) < 6) continue;
+    for (const u of [ME, THEM]) s[u] += calcPts(getPred(g.id, u), g);
+  }
   return s;
 }
 function esc(s) { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
