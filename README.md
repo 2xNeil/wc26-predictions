@@ -1,20 +1,20 @@
 <p align="center">
-  <img src="assets/wc-logo-blk.png" width="120" alt="WC26 Predictions" />
+  <img src="assets/wc-logo-blk.png" width="80" alt="WC26 Predictions" />
 </p>
 
 <h1 align="center">WC26 Predictions</h1>
 
 <p align="center">
-  A multi-player FIFA World Cup 2026 predictions game.
+  A multiplayer FIFA World Cup 2026 predictions game.
 </p>
 
 <p align="center">
-  <img src="assets/worldcup_van.gif" width="100%" alt="WC 2026" />
+  <img src="assets/iphone_screen_1.png" width="245" alt="Login" />&nbsp;&nbsp;
+  <img src="assets/iphone_screen_2.png" width="245" alt="Predictions carousel" />&nbsp;&nbsp;
+  <img src="assets/iphone_screen_3.png" width="245" alt="Scorecard and leaderboard" />
 </p>
 
-Pick the winner and score for every match, lock in your picks before kickoff, and see how you stack up against your rivals.
-
-Built as a single static HTML page, hosted on GitHub Pages, with Google Sheets as a rudimentary database.
+Pick the winner and score for every match, lock in your picks before kickoff, and see how you stack up against your rivals. Built as a single static HTML page, hosted on GitHub Pages, with Google Sheets as a rudimentary database.
 
 ## How it works
 
