@@ -215,6 +215,27 @@
     .sg-pill--green { background:#166534; }
     .sg-pill--red   { background:#991B1B; }
     .sg-pill--dim   { opacity:.45; }
+    /* ── LEADERBOARD ── */
+    .lb-box { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:14px; padding:.85rem .9rem; margin-bottom:1rem; }
+    .lb-head { display:flex; align-items:center; justify-content:space-between; padding-bottom:.6rem; border-bottom:1px solid rgba(255,255,255,.08); margin-bottom:.4rem; }
+    .lb-title { font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:2px; color:var(--white); }
+    .lb-tglwrap { display:flex; align-items:center; gap:.5rem; }
+    .lb-tgllbl { font-size:.62rem; color:rgba(255,255,255,.45); }
+    .lb-tgl { width:40px; height:24px; border-radius:12px; background:rgba(255,255,255,.15); position:relative; cursor:pointer; border:none; transition:background .2s; padding:0; flex-shrink:0; }
+    .lb-tgl.on { background:var(--gold); }
+    .lb-tgl::after { content:''; position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:#fff; transition:transform .2s; }
+    .lb-tgl.on::after { transform:translateX(16px); }
+    .lb-row { display:flex; align-items:center; gap:.6rem; padding:.5rem .5rem; border-radius:10px; }
+    .lb-row.top { background:rgba(201,162,39,.1); }
+    .lb-rank { font-family:'Bebas Neue',sans-serif; font-size:.95rem; width:14px; color:rgba(255,255,255,.4); flex-shrink:0; }
+    .lb-row.top .lb-rank { color:var(--ghi); }
+    .lb-pfp { width:30px; height:30px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+    .lb-name { flex:1; font-size:.76rem; font-weight:600; color:rgba(255,255,255,.85); }
+    .lb-row.top .lb-name { color:var(--white); }
+    .lb-pts { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; color:var(--white); line-height:1; }
+    .lb-row.top .lb-pts { color:var(--ghi); }
+    .lb-foot { text-align:center; font-size:.62rem; color:rgba(255,255,255,.4); margin-top:.6rem; padding-top:.6rem; border-top:1px solid rgba(255,255,255,.08); }
+    .lb-flag { width:18px; height:12px; object-fit:cover; border-radius:2px; vertical-align:-2px; }
     .sg-pfp { width:15px; height:15px; border-radius:50%; object-fit:cover; flex-shrink:0; }
 
     .loading { text-align:center; padding:3.5rem 1rem; color:var(--dim); }
@@ -358,7 +379,8 @@ const SLIDE_GAP   = 14;
 
 // ── STATE ────────────────────────────────────────────────────────────
 let ME = '', THEM = '', ME_NAME = '', START_FROM = 1;
-let games = [], predictions = [];
+let games = [], predictions = [], players = [];
+let lvlField = true;
 const draft = {};
 let currentIdx = 0, totalSlides = 0, touchInited = false;
 window._slideW = 300; window._peek = 40;
@@ -465,11 +487,13 @@ async function apiGet(action, extra = {}) {
 // Pre-fetch while the user is entering their PIN — data isn't sensitive
 const _preGames       = apiGet('games');
 const _prePredictions = apiGet('predictions');
+const _prePlayers     = apiGet('players').catch(() => []);
 
 // ── DATA ─────────────────────────────────────────────────────────────
 async function loadData() {
   try {
-    [games, predictions] = await Promise.all([_preGames, _prePredictions]);
+    [games, predictions, players] = await Promise.all([_preGames, _prePredictions, _prePlayers]);
+    if (!Array.isArray(players)) players = [];
     buildCarousel();
   } catch {
     document.getElementById('carousel-outer').innerHTML =
@@ -811,6 +835,64 @@ async function confirmLock() {
   buildCarousel();
 }
 
+// ── LEADERBOARD ──────────────────────────────────────────────────────
+function gameNum(id) { return parseInt(String(id).replace(/\D/g,'')); }
+
+function buildLeaderboard() {
+  if (!players.length) return '';
+  const cutoff = Math.max(...players.map(p => Number(p.start_from) || 1));
+  const from = lvlField ? cutoff : 1;
+
+  const ranked = players.map(p => {
+    let pts = 0;
+    for (const g of games) {
+      if (!g.result_winner) continue;
+      if (gameNum(g.id) < from) continue;
+      pts += calcPts(getPred(g.id, p.user), g);
+    }
+    return { user: p.user, pts };
+  }).sort((a,b) => b.pts - a.pts || a.user.localeCompare(b.user));
+
+  let rows = '';
+  ranked.forEach((r, i) => {
+    rows += `
+    <div class="lb-row${i === 0 ? ' top' : ''}">
+      <span class="lb-rank">${i + 1}</span>
+      <img class="lb-pfp" src="assets/${r.user}.png" alt="${cap(r.user)}" />
+      <span class="lb-name">${cap(r.user)}</span>
+      <span class="lb-pts">${r.pts}</span>
+    </div>`;
+  });
+
+  const cutGame = games.find(g => gameNum(g.id) === cutoff);
+  const showToggle = cutoff > 1;
+  const toggle = showToggle ? `
+    <div class="lb-tglwrap">
+      <span class="lb-tgllbl">Level playing field</span>
+      <button class="lb-tgl${lvlField ? ' on' : ''}" onclick="toggleLvlField()" aria-label="Level playing field"></button>
+    </div>` : '';
+  const foot = (showToggle && lvlField && cutGame) ? `
+    <div class="lb-foot">Scores counted since
+      <img class="lb-flag" src="${flagSrc(cutGame.team1)}" alt="${cutGame.team1}" /> vs
+      <img class="lb-flag" src="${flagSrc(cutGame.team2)}" alt="${cutGame.team2}" />
+    </div>` : '';
+
+  return `
+<div class="lb-box">
+  <div class="lb-head">
+    <div class="lb-title">LEADERBOARD</div>
+    ${toggle}
+  </div>
+  ${rows}
+  ${foot}
+</div>`;
+}
+
+function toggleLvlField() {
+  lvlField = !lvlField;
+  openStandings();
+}
+
 // ── STANDINGS ─────────────────────────────────────────────────────────
 function openStandings() {
   const sc = totals();
@@ -901,7 +983,7 @@ function openStandings() {
     }
   }
 
-  document.getElementById('st-body').innerHTML = html || '<div class="loading">No games yet.</div>';
+  document.getElementById('st-body').innerHTML = buildLeaderboard() + (html || '<div class="loading">No games yet.</div>');
   document.getElementById('standings-modal').classList.add('open');
 }
 </script>

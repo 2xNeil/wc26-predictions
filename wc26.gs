@@ -12,6 +12,18 @@ function doGet(e) {
     return json(sheetToJson(ss.getSheetByName('predictions')));
   }
 
+  if (action === 'players') {
+    const rows = ss.getSheetByName('users').getDataRange().getValues().slice(1);
+    const joined = {};
+    for (const r of rows) {
+      const u = r[0];
+      if (!u) continue;
+      const sf = Number(r[3]) || 1;
+      joined[u] = joined[u] ? Math.min(joined[u], sf) : sf;
+    }
+    return json(Object.keys(joined).map(user => ({ user, start_from: joined[user] })));
+  }
+
   if (action === 'verifyPin') {
     const { pin } = e.parameter;
     const rows = ss.getSheetByName('users').getDataRange().getValues().slice(1);
