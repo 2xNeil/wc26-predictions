@@ -214,6 +214,7 @@
     .sg-pill { display:inline-flex; align-items:center; gap:.28rem; padding:.22rem .48rem; border-radius:999px; border:none; background:rgba(255,255,255,.12); font-size:.62rem; font-weight:600; white-space:nowrap; color:var(--white); }
     .sg-pill--green { background:#166534; }
     .sg-pill--red   { background:#991B1B; }
+    .sg-pill--dim   { opacity:.45; }
     .sg-pfp { width:15px; height:15px; border-radius:50%; object-fit:cover; flex-shrink:0; }
 
     .loading { text-align:center; padding:3.5rem 1rem; color:var(--dim); }
@@ -841,18 +842,24 @@ function openStandings() {
       const thP  = getPred(g.id, THEM);
       const hasR = !!(g.result_winner && String(g.result_winner).trim());
 
-      // Build pills for a given team side
+      // Build pills for a given team side — pairing first, other players dimmed after
       const pillsFor = (team) => {
         const users = [
-          { key: ME,   pred: myP,  revealable: true },
-          { key: THEM, pred: thP,  revealable: hasR || !!myP },
+          { key: ME,   pred: myP, dim: false },
+          { key: THEM, pred: thP, dim: false },
         ];
+        const seen = new Set([ME, THEM]);
+        for (const p of predictions) {
+          if (String(p.game_id) !== String(g.id) || seen.has(p.user)) continue;
+          seen.add(p.user);
+          users.push({ key: p.user, pred: p, dim: true });
+        }
         return users
-          .filter(u => u.pred && u.pred.winner === team && u.revealable)
+          .filter(u => u.pred && u.pred.winner === team)
           .map(u => {
             const correct = hasR ? u.pred.winner === g.result_winner : null;
             const cls = correct === true ? 'sg-pill--green' : correct === false ? 'sg-pill--red' : '';
-            return `<div class="sg-pill ${cls}">
+            return `<div class="sg-pill ${cls}${u.dim ? ' sg-pill--dim' : ''}">
               <img class="sg-pfp" src="assets/${u.key}.png" alt="${cap(u.key)}" />
               <span>${u.pred.score1} – ${u.pred.score2}</span>
             </div>`;
