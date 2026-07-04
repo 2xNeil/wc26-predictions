@@ -357,7 +357,7 @@ const ROUND_ORDER = ['Round of 32','Round of 16','Quarter-finals','Semi-finals',
 const SLIDE_GAP   = 14;
 
 // ── STATE ────────────────────────────────────────────────────────────
-let ME = '', THEM = '', ME_NAME = '';
+let ME = '', THEM = '', ME_NAME = '', START_FROM = 1;
 let games = [], predictions = [];
 const draft = {};
 let currentIdx = 0, totalSlides = 0, touchInited = false;
@@ -366,9 +366,10 @@ window._slideW = 300; window._peek = 40;
 function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : ''; }
 
 // ── BOOT ─────────────────────────────────────────────────────────────
-function setSession(user, opponent, pin) {
+function setSession(user, opponent, pin, startFrom) {
   ME = user; THEM = opponent; ME_NAME = cap(ME);
-  sessionStorage.setItem('wc_session', JSON.stringify({ pin, user, opponent }));
+  START_FROM = Number(startFrom) || 1;
+  sessionStorage.setItem('wc_session', JSON.stringify({ pin, user, opponent, startFrom: START_FROM }));
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -428,7 +429,7 @@ async function verifyPin() {
   try {
     const res = await apiGet('verifyPin', { pin });
     if (res.valid) {
-      setSession(res.user, res.opponent, pin);
+      setSession(res.user, res.opponent, pin, res.startFrom);
       document.getElementById('pin-overlay').classList.add('hidden');
       document.body.classList.add('logged-in');
       window._bgRestart?.();
@@ -444,7 +445,7 @@ async function attemptLoad(pin) {
   try {
     const res = await apiGet('verifyPin', { pin });
     if (res.valid) {
-      setSession(res.user, res.opponent, pin);
+      setSession(res.user, res.opponent, pin, res.startFrom);
       document.getElementById('pin-overlay').classList.add('hidden');
       document.body.classList.add('logged-in');
       window._bgRestart?.();
@@ -505,8 +506,7 @@ function calcPts(pred, game) {
 }
 function totals() {
   const s = { [ME]: 0, [THEM]: 0 };
-  const players = [(ME||'').toLowerCase(), (THEM||'').toLowerCase()];
-  const startFrom = players.includes('sergio') ? 7 : players.includes('charu') ? 5 : 1; 
+  const startFrom = START_FROM; 
   for (const g of games) {
     if (!g.result_winner) continue;
     if (parseInt(g.id.replace(/\D/g,'')) < startFrom) continue;
@@ -822,8 +822,7 @@ function openStandings() {
   document.getElementById('st-pts-them').textContent = sc[THEM];
 
   const byRound = {};
-  const players = [(ME||'').toLowerCase(), (THEM||'').toLowerCase()];
-  const startFrom = players.includes('sergio') ? 7 : players.includes('charu') ? 5 : 1;
+  const startFrom = START_FROM;
   for (const g of games) {
     if (parseInt(g.id.replace(/\D/g,'')) < startFrom) continue;
     const r = g.round || 'Other';

@@ -17,7 +17,10 @@ function doGet(e) {
     const rows = ss.getSheetByName('users').getDataRange().getValues().slice(1);
     const match = rows.find(r => String(r[1]) === String(pin));
     if (!match) return json({ valid: false });
-    return json({ valid: true, user: match[0], opponent: match[2] });
+    const opponentRow = rows.find(r => r[0] === match[2] && r[2] === match[0]);
+    const cutoff = r => Number(r && r[3]) || 1;
+    const startFrom = Math.max(cutoff(match), cutoff(opponentRow));
+    return json({ valid: true, user: match[0], opponent: match[2], startFrom });
   }
 
   if (action === 'submitPicks') {
