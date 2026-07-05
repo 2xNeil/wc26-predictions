@@ -20,6 +20,7 @@
       --green: #22C55E;
       --red:   #EF4444;
     }
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     html, body { height: 100%; }
     body { background: var(--bg); color: var(--white); font-family: 'Inter', sans-serif; min-height: 100vh; -webkit-font-smoothing: antialiased; }
     body.logged-in { overflow:hidden; }
@@ -223,7 +224,7 @@
     .lb-head { display:flex; align-items:center; justify-content:space-between; padding-bottom:.6rem; border-bottom:1px solid rgba(255,255,255,.08); margin-bottom:.4rem; }
     .lb-title { font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:2px; color:var(--white); }
     .lb-tglwrap { display:flex; align-items:center; gap:.5rem; }
-    .lb-tgllbl { font-size:.62rem; color:rgba(255,255,255,.45); }
+    .lb-tgllbl { font-size:.7rem; color:rgba(255,255,255,.5); }
     .lb-tgl { width:40px; height:24px; border-radius:12px; background:rgba(255,255,255,.15); position:relative; cursor:pointer; border:none; transition:background .2s; padding:0; flex-shrink:0; }
     .lb-tgl.on { background:var(--gold); }
     .lb-tgl::after { content:''; position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:#fff; transition:transform .2s; }
@@ -237,7 +238,7 @@
     .lb-row.top .lb-name { color:var(--white); }
     .lb-pts { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; color:var(--white); line-height:1; }
     .lb-row.top .lb-pts { color:var(--ghi); }
-    .lb-foot { text-align:center; font-size:.62rem; color:rgba(255,255,255,.4); margin-top:.6rem; padding-top:.6rem; border-top:1px solid rgba(255,255,255,.08); }
+    .lb-foot { text-align:center; font-size:.56rem; color:rgba(255,255,255,.4); margin-top:.6rem; padding-top:.6rem; border-top:1px solid rgba(255,255,255,.08); }
     .lb-flag { width:18px; height:12px; object-fit:cover; border-radius:2px; vertical-align:-2px; }
     .sg-pfp { width:15px; height:15px; border-radius:50%; object-fit:cover; flex-shrink:0; }
 
@@ -383,7 +384,7 @@ const SLIDE_GAP   = 14;
 // ── STATE ────────────────────────────────────────────────────────────
 let ME = '', THEM = '', ME_NAME = '', START_FROM = 1;
 let games = [], predictions = [], players = [];
-let lvlField = true;
+let lvlField = false;
 const draft = {};
 let currentIdx = 0, totalSlides = 0, touchInited = false;
 window._slideW = 300; window._peek = 40;
@@ -875,7 +876,7 @@ function buildLeaderboard() {
       <button class="lb-tgl${lvlField ? ' on' : ''}" onclick="toggleLvlField()" aria-label="Level playing field"></button>
     </div>` : '';
   const foot = (showToggle && lvlField && cutGame) ? `
-    <div class="lb-foot">Scores counted since
+    <div class="lb-foot">Scores since last player joined, 
       <img class="lb-flag" src="${flagSrc(cutGame.team1)}" alt="${cutGame.team1}" /> vs
       <img class="lb-flag" src="${flagSrc(cutGame.team2)}" alt="${cutGame.team2}" />
     </div>` : '';
