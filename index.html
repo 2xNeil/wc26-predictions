@@ -215,6 +215,9 @@
     .sg-pill--green { background:#166534; }
     .sg-pill--red   { background:#991B1B; }
     .sg-pill--dim   { opacity:.45; }
+    .sg-pill--gold  { background:linear-gradient(120deg,#A88520,#E8B320,#FFE98A,#E8B320,#A88520); background-size:250% 100%; color:#0a0a0a; font-weight:700; animation:goldflow 2.4s ease-in-out infinite, goldglow 2.4s ease-in-out infinite; }
+    @keyframes goldflow { 0%,100% { background-position:0% 0; } 50% { background-position:100% 0; } }
+    @keyframes goldglow { 0%,100% { box-shadow:0 0 4px rgba(240,200,66,.3); } 50% { box-shadow:0 0 16px rgba(240,200,66,.8); } }
     /* ── LEADERBOARD ── */
     .lb-box { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:14px; padding:.85rem .9rem; margin-bottom:1rem; }
     .lb-head { display:flex; align-items:center; justify-content:space-between; padding-bottom:.6rem; border-bottom:1px solid rgba(255,255,255,.08); margin-bottom:.4rem; }
@@ -939,7 +942,8 @@ function openStandings() {
           .filter(u => u.pred && u.pred.winner === team)
           .map(u => {
             const correct = hasR ? u.pred.winner === g.result_winner : null;
-            const cls = correct === true ? 'sg-pill--green' : correct === false ? 'sg-pill--red' : '';
+            const exact = hasR && String(u.pred.score1) === String(g.result_score1) && String(u.pred.score2) === String(g.result_score2);
+            const cls = exact ? 'sg-pill--gold' : correct === true ? 'sg-pill--green' : correct === false ? 'sg-pill--red' : '';            
             return `<div class="sg-pill ${cls}${u.dim ? ' sg-pill--dim' : ''}">
               <img class="sg-pfp" src="assets/${u.key}.png" alt="${cap(u.key)}" />
               <span>${u.pred.score1} – ${u.pred.score2}</span>
