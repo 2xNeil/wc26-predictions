@@ -234,7 +234,9 @@
     .lb-rank { font-family:'Bebas Neue',sans-serif; font-size:.95rem; width:14px; color:rgba(255,255,255,.4); flex-shrink:0; }
     .lb-row.top .lb-rank { color:var(--ghi); }
     .lb-pfp { width:30px; height:30px; border-radius:50%; object-fit:cover; flex-shrink:0; }
-    .lb-name { flex:1; font-size:.76rem; font-weight:600; color:rgba(255,255,255,.85); }
+    .lb-namecol { flex:1; display:flex; flex-direction:column; gap:1px; min-width:0; }
+    .lb-name { font-size:.76rem; font-weight:600; color:rgba(255,255,255,.85); line-height:1.2; }
+    .lb-gp { font-size:.58rem; color:rgba(255,255,255,.35); line-height:1.2; }
     .lb-row.top .lb-name { color:var(--white); }
     .lb-pts { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; color:var(--white); line-height:1; }
     .lb-row.top .lb-pts { color:var(--ghi); }
@@ -848,13 +850,14 @@ function buildLeaderboard() {
   const from = lvlField ? cutoff : 1;
 
   const ranked = players.map(p => {
-    let pts = 0;
+    let pts = 0, gp = 0;
     for (const g of games) {
       if (!g.result_winner) continue;
       if (gameNum(g.id) < from) continue;
-      pts += calcPts(getPred(g.id, p.user), g);
+      const pred = getPred(g.id, p.user);
+      if (pred) { gp++; pts += calcPts(pred, g); }
     }
-    return { user: p.user, pts };
+    return { user: p.user, pts, gp };
   }).sort((a,b) => b.pts - a.pts || a.user.localeCompare(b.user));
 
   let rows = '';
@@ -863,7 +866,10 @@ function buildLeaderboard() {
     <div class="lb-row${i === 0 ? ' top' : ''}">
       <span class="lb-rank">${i + 1}</span>
       <img class="lb-pfp" src="assets/${r.user}.png" alt="${cap(r.user)}" />
-      <span class="lb-name">${cap(r.user)}</span>
+      <span class="lb-namecol">
+        <span class="lb-name">${cap(r.user)}</span>
+        <span class="lb-gp">${r.gp} game${r.gp === 1 ? '' : 's'}</span>
+      </span>
       <span class="lb-pts">${r.pts}</span>
     </div>`;
   });
