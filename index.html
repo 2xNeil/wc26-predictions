@@ -535,6 +535,14 @@ function fHtml(team, sm) {
   return `<img class="${cls}" src="${src}" alt="${team}" onerror="flagErr(this,'${init}',${sm})" />`;
 }
 function pfpHtml(user, state) { return `<img class="pick-pfp ${state}" src="assets/${user}.png" alt="${cap(user)}" />`; }
+// First-session grace: a player with no saved predictions may still pick
+// finished games at/after their pairing start. Closes after first submit.
+function inGrace() {
+  return !predictions.some(p => p.user === ME);
+}
+function graced(g) {
+  return inGrace() && !!g.result_winner && gameNum(g.id) >= START_FROM;
+}
 function ptsFor(game) {
   const r = game.round || '';
   if (r === 'Final') return { win: 20, exact: 50 };
@@ -565,7 +573,7 @@ function esc(s) { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 function buildCarousel() {
   // #4: only show games where user hasn't predicted yet
   const pending = [...games]
-    .filter(g => !getPred(g.id, ME) && !g.result_winner)
+    .filter(g => !getPred(g.id, ME) && (!g.result_winner || graced(g)))
     .sort((a,b) => {
       const ai=ROUND_ORDER.indexOf(a.round), bi=ROUND_ORDER.indexOf(b.round);
       return (ai<0?999:ai)-(bi<0?999:bi);
@@ -627,7 +635,7 @@ function buildCarousel() {
 function buildPredCard(g, bgNum) {
   const myPred   = getPred(g.id, ME);
   const thPred   = getPred(g.id, THEM);
-  const hasRes   = !!(g.result_winner && String(g.result_winner).trim());
+  const hasRes   = !graced(g) && !!(g.result_winner && String(g.result_winner).trim());
   const isLocked = !!myPred;
   const d        = draft[g.id] || { winner:null, score1:0, score2:0 };
 
@@ -774,7 +782,7 @@ function initTouch(el) {
 function pickWinner(gameId, team) {
   if (getPred(gameId, ME)) return;
   const g = games.find(x => String(x.id) === String(gameId));
-  if (!g || g.result_winner) return;
+  if (!g || (g.result_winner && !graced(g))) return;
   if (!draft[gameId]) draft[gameId] = { winner:null, score1:0, score2:0 };
   draft[gameId].winner = team;
   const wbA = document.getElementById(`wb-${gameId}-a`);
@@ -794,7 +802,7 @@ function pickWinner(gameId, team) {
 function step(gameId, side, delta) {
   if (getPred(gameId, ME)) return;
   const g = games.find(x => String(x.id) === String(gameId));
-  if (!g || g.result_winner) return;
+  if (!g || (g.result_winner && !graced(g))) return;
   if (!draft[gameId]) draft[gameId] = { winner:null, score1:0, score2:0 };
   const key = side==='a' ? 'score1' : 'score2';
   draft[gameId][key] = Math.max(0, Math.min(20, (draft[gameId][key]||0)+delta));
