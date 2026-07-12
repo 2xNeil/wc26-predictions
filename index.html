@@ -114,7 +114,9 @@
       background-image:none;
     }
     .pc-meta { font-size:.68rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--gold); line-height:1.4; margin-bottom:.65rem; }
-    .pc-vs { font-family:'Bebas Neue',sans-serif; font-size:clamp(1.85rem,6.5vw,2.6rem); letter-spacing:1.5px; line-height:1.05; margin-bottom:1.5rem; }
+    .pc-vs { font-family:'Bebas Neue',sans-serif; font-size:clamp(1.85rem,6.5vw,2.6rem); letter-spacing:1.5px; line-height:1.05; margin-bottom:.6rem; }
+    .pc-chips { display:flex; gap:6px; align-items:center; margin-bottom:1.05rem; }
+    .pc-chip { display:inline-flex; align-items:center; padding:.22rem .48rem; border-radius:999px; font-size:.68rem; font-weight:700; white-space:nowrap; color:#0a0a0a; background:linear-gradient(120deg,#A88520,#E8B320,#FFE98A,#E8B320,#A88520); background-size:250% 100%; animation:goldflow 10s ease-in-out infinite, goldglow 10s ease-in-out infinite; }
     .pc-vs .vs-sep { color:rgba(255,255,255,.28); font-size:.65em; }
     .pc-winner-section { margin-bottom:1.4rem; }
     .pc-label { font-size:.68rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.32); }
@@ -386,7 +388,7 @@ const FIFA_CODES = {
   "Spain":"ESP","Sweden":"SWE","Switzerland":"SUI","Tunisia":"TUN",
   "Turkey":"TUR","Uruguay":"URU","USA":"USA","Uzbekistan":"UZB",
 };
-const ROUND_ORDER = ['Round of 32','Round of 16','Quarter-finals','Semi-finals','Third Place Playoff','Final'];
+const ROUND_ORDER = ['Round of 32','Round of 16','Quarter-final','Semi-final','Play-off for third place','Final'];
 const SLIDE_GAP   = 14;
 
 // ── STATE ────────────────────────────────────────────────────────────
@@ -533,11 +535,18 @@ function fHtml(team, sm) {
   return `<img class="${cls}" src="${src}" alt="${team}" onerror="flagErr(this,'${init}',${sm})" />`;
 }
 function pfpHtml(user, state) { return `<img class="pick-pfp ${state}" src="assets/${user}.png" alt="${cap(user)}" />`; }
+function ptsFor(game) {
+  const r = game.round || '';
+  if (r === 'Final') return { win: 20, exact: 50 };
+  if (r === 'Semi-final') return { win: 10, exact: 25 };
+  return { win: 5, exact: 10 };
+}
 function calcPts(pred, game) {
   if (!pred||!game.result_winner) return 0;
+  const v = ptsFor(game);
   let p = 0;
-  if (pred.winner===game.result_winner) p+=5;
-  if (String(pred.score1)===String(game.result_score1)&&String(pred.score2)===String(game.result_score2)) p+=10;
+  if (pred.winner===game.result_winner) p+=v.win;
+  if (String(pred.score1)===String(game.result_score1)&&String(pred.score2)===String(game.result_score2)) p+=v.exact;
   return p;
 }
 function totals() {
@@ -670,6 +679,10 @@ function buildPredCard(g, bgNum) {
 <div class="pred-card" data-id="${id}"${bgStyle}>
   <div class="pc-meta">${meta}</div>
   <div class="pc-vs">${g.team1} <span class="vs-sep">vs</span> ${g.team2}</div>
+  <div class="pc-chips">
+    <span class="pc-chip">+${ptsFor(g).win} Winner</span>
+    <span class="pc-chip">+${ptsFor(g).win + ptsFor(g).exact} Exact Scoreline</span>
+  </div>
   <div class="pc-winner-section">
     <div class="pc-label" style="margin-bottom:.55rem">Winner</div>
     <div class="pc-winner">

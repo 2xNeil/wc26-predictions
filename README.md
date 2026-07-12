@@ -26,7 +26,10 @@ Pick the winner and score for every match, lock in your picks before kickoff, an
 
 ## Scoring
 
-| Pick | Points |
-|---|---|
-| Correct winner | +5 |
-| Exact scoreline | +10 |
+| Round | Correct winner | Exact scoreline |
+|---|---|---|
+| Semi-final | +10 | +35 |
+| Final | +20 | +70 |
+| Every other round | +5 | +15 |
+
+An exact scoreline includes the correct winner points — it's the full payout for a perfect pick.
