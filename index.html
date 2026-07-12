@@ -187,13 +187,11 @@
     /* ── STANDINGS SHEET ── */
     #standings-modal { position:fixed; inset:0; z-index:35; display:flex; flex-direction:column; background:#111; transition:transform .3s cubic-bezier(.4,0,.2,1); transform:translateY(100%); }
     #standings-modal.open { transform:translateY(0); }
-    .st-header { display:flex; align-items:center; justify-content:space-between; padding:.9rem 1.25rem; border-bottom:1px solid var(--line); flex-shrink:0; }
-    .st-title  { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:2px; }
-    .st-scores    { display:flex; align-items:center; gap:.6rem; }
-    .st-si        { display:flex; align-items:center; gap:.4rem; }
-    .st-pfp-score { width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,.15); flex-shrink:0; }
-    .st-sp        { font-family:'Bebas Neue',sans-serif; font-size:1.7rem; line-height:1; }
-    .st-vs        { font-size:.6rem; color:var(--dim); }
+    .st-header { display:flex; align-items:center; gap:11px; padding:.85rem 1.1rem; border-bottom:1px solid var(--line); flex-shrink:0; }
+    .st-logo { width:40px; height:40px; object-fit:contain; flex-shrink:0; }
+    .st-brand { display:flex; flex-direction:column; gap:3px; }
+    .st-eyebrow { font-size:.58rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--gold); line-height:1.3; }
+    .st-wordmark { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:3px; color:var(--white); line-height:1; }
     .st-body   { flex:1; overflow-y:auto; padding:1.25rem 1.25rem 3rem; }
     /* ── SCORECARD GAME BOXES ── */
     .sg-round { font-size:.52rem; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--gold); padding:1.1rem 0 .4rem; }
@@ -242,6 +240,15 @@
     .lb-row.top .lb-pts { color:var(--ghi); }
     .lb-foot { text-align:center; font-size:.56rem; color:rgba(255,255,255,.4); margin-top:.6rem; padding-top:.6rem; border-top:1px solid rgba(255,255,255,.08); }
     .lb-flag { width:18px; height:12px; object-fit:cover; border-radius:2px; vertical-align:-2px; }
+    /* ── HEAD TO HEAD ── */
+    .h2h-row { display:flex; align-items:center; justify-content:center; gap:1.4rem; padding:.2rem 0; }
+    .h2h-side { display:flex; flex-direction:column; align-items:center; }
+    .h2h-pfp { width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,.15); }
+    .h2h-name { font-size:.62rem; font-weight:600; color:rgba(255,255,255,.6); margin-top:4px; }
+    .h2h-score { font-family:'Bebas Neue',sans-serif; font-size:2.1rem; color:var(--white); line-height:1; }
+    .h2h-vs { font-size:.62rem; color:rgba(255,255,255,.35); font-weight:600; }
+    .h2h-foot { font-size:.56rem; color:rgba(255,255,255,.4); display:flex; align-items:center; justify-content:center; gap:5px; margin-top:.65rem; }
+    .h2h-info { width:11px; height:11px; border-radius:50%; border:1px solid rgba(255,255,255,.35); color:rgba(255,255,255,.45); font-size:8px; display:inline-flex; align-items:center; justify-content:center; font-style:italic; font-family:Georgia,serif; flex-shrink:0; }
     .sg-pfp { width:15px; height:15px; border-radius:50%; object-fit:cover; flex-shrink:0; }
 
     .loading { text-align:center; padding:3.5rem 1rem; color:var(--dim); }
@@ -299,11 +306,10 @@
 
 <div id="standings-modal">
   <div class="st-header">
-    <span class="st-title">Standings</span>
-    <div class="st-scores">
-      <div class="st-si"><img class="st-pfp-score" id="st-pfp-me" src="" alt="" /><div class="st-sp" id="st-pts-me">0</div></div>
-      <div class="st-vs">vs</div>
-      <div class="st-si"><img class="st-pfp-score" id="st-pfp-them" src="" alt="" /><div class="st-sp" id="st-pts-them">0</div></div>
+    <img class="st-logo" src="assets/wc-logo.png" alt="" />
+    <div class="st-brand">
+      <span class="st-eyebrow">FIFA World Cup 2026</span>
+      <span class="st-wordmark">PREDICTIONS</span>
     </div>
   </div>
   <div class="st-body" id="st-body"><div class="loading"><div class="spinner"></div></div></div>
@@ -903,16 +909,32 @@ function toggleLvlField() {
   openStandings();
 }
 
+// ── HEAD TO HEAD ─────────────────────────────────────────────────────
+function buildH2H() {
+  const sc = totals();
+  const cutGame = games.find(g => gameNum(g.id) === START_FROM);
+  const foot = (START_FROM > 1 && cutGame) ? `
+    <div class="h2h-foot"><span class="h2h-info">i</span>
+      <span>Scores since this matchup began,
+        <img class="lb-flag" src="${flagSrc(cutGame.team1)}" alt="${cutGame.team1}" /> vs
+        <img class="lb-flag" src="${flagSrc(cutGame.team2)}" alt="${cutGame.team2}" /> in ${cutGame.round}</span>
+    </div>` : '';
+  return `
+<div class="lb-box">
+  <div class="lb-head"><div class="lb-title">HEAD TO HEAD</div></div>
+  <div class="h2h-row">
+    <div class="h2h-side"><img class="h2h-pfp" src="assets/${ME}.png" alt="${ME_NAME}" /><span class="h2h-name">${ME_NAME}</span></div>
+    <span class="h2h-score">${sc[ME]}</span>
+    <span class="h2h-vs">VS</span>
+    <span class="h2h-score">${sc[THEM]}</span>
+    <div class="h2h-side"><img class="h2h-pfp" src="assets/${THEM}.png" alt="${cap(THEM)}" /><span class="h2h-name">${cap(THEM)}</span></div>
+  </div>
+  ${foot}
+</div>`;
+}
+
 // ── STANDINGS ─────────────────────────────────────────────────────────
 function openStandings() {
-  const sc = totals();
-  document.getElementById('st-pfp-me').src    = `assets/${ME}.png`;
-  document.getElementById('st-pfp-me').alt    = ME_NAME;
-  document.getElementById('st-pfp-them').src  = `assets/${THEM}.png`;
-  document.getElementById('st-pfp-them').alt  = cap(THEM);
-  document.getElementById('st-pts-me').textContent   = sc[ME];
-  document.getElementById('st-pts-them').textContent = sc[THEM];
-
   const byRound = {};
   const startFrom = START_FROM;
   for (const g of games) {
@@ -994,7 +1016,7 @@ function openStandings() {
     }
   }
 
-  document.getElementById('st-body').innerHTML = buildLeaderboard() + (html || '<div class="loading">No games yet.</div>');
+  document.getElementById('st-body').innerHTML = buildH2H() + buildLeaderboard() + (html || '<div class="loading">No games yet.</div>');
   document.getElementById('standings-modal').classList.add('open');
 }
 </script>
